@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Venx Online Market</title>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #0b8f4d;
+      --primary-dark: #086d3a;
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-main: #2c3e50;
+      --text-muted: #7f8c8d;
+      --border-color: #e2e8f0;
+      --warning-color: #d97706;
+      --danger-color: #dc2626;
+      --success-color: #16a34a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-main);
+      padding-bottom: 40px;
+    }
+
+    /* --- Top Navbar --- */
+    header {
+      background: var(--primary-color);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .brand-badge {
+      background: rgba(255,255,255,0.2);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* --- Quick Nav Section --- */
+    .nav-bar {
+      background: white;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: #f1f5f9;
+      color: var(--text-main);
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .nav-btn.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    /* --- Container --- */
+    .container {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    /* --- Stats Overview Grid --- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 18px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-info h4 {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-info .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .icon-green { background: #e6fffa; color: var(--primary-color); }
+    .icon-yellow { background: #fff8e6; color: var(--warning-color); }
+    .icon-blue { background: #e0f2fe; color: #0284c7; }
+
+    /* --- Controls & Filter Bar --- */
+    .controls-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-input {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      outline: none;
+      min-width: 260px;
+    }
+
+    .filter-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--text-main);
+      color: white;
+      border-color: var(--text-main);
+    }
+
+    /* --- Business Listings Table --- */
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafc;
+      padding: 14px 16px;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .biz-name {
+      font-weight: 800;
+      color: var(--text-main);
+      font-size: 14px;
+    }
+
+    .biz-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status-pending { background: #fef3c7; color: #b45309; }
+    .status-live { background: #dcfce7; color: #15803d; }
+    .status-suspended { background: #fee2e2; color: #b91c1c; }
+
+    .btn-approve {
+      padding: 8px 12px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-approve:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-revoke {
+      padding: 8px 12px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-revoke:hover {
+      background: #dc2626;
+    }
+
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Admin Header -->
+  <header>
+    <div class="brand">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Venx Admin Panel</span>
+      <span class="brand-badge">Control Center</span>
+    </div>
+  </header>
+
+  <!-- Quick Navigation Bar -->
+  <div class="nav-bar">
+    <a href="index.html" class="nav-btn active">
+      <i class="fa-solid fa-store"></i> Businesses
+    </a>
+    <a href="users.html" class="nav-btn">
+      <i class="fa-solid fa-users"></i> Users Management
+    </a>
+    <a href="payments.html" class="nav-btn">
+      <i class="fa-solid fa-file-invoice-dollar"></i> Payment Logs
+    </a>
+    <a href="orders.html" class="nav-btn">
+      <i class="fa-solid fa-cart-shopping"></i> Marketplace Orders
+    </a>
+  </div>
+
+  <div class="container">
+
+    <!-- Overview Metrics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Total Businesses</h4>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-icon icon-blue">
+          <i class="fa-solid fa-store"></i>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Pending Approval</h4>
+          <div class="stat-value" id="statPending">0</div>
+        </div>
+        <div class="stat-icon icon-yellow">
+          <i class="fa-solid fa-clock"></i>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Live Vendors</h4>
+          <div class="stat-value" id="statLive">0</div>
+        </div>
+        <div class="stat-icon icon-green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter and Search Bar -->
+    <div class="controls-card">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by name, phone, or reference...">
+      
+      <div class="filter-btn-group">
+        <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+        <button class="filter-btn" onclick="setFilter('pending', this)">Pending Approval</button>
+        <button class="filter-btn" onclick="setFilter('live', this)">Live Marketplace</button>
+      </div>
+    </div>
+
+    <!-- Businesses Management Table -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Business Details</th>
+            <th>Package & Limit</th>
+            <th>Payment Verification</th>
+            <th>Live Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="businessTableBody">
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
+              <p>Loading business records from Firebase...</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Firebase Script Integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-analytics.js";
+    import { 
+      getFirestore, 
+      collection, 
+      onSnapshot, 
+      doc, 
+      updateDoc, 
+      query, 
+      orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCX2jTRmAJjTXAv4cpNFbERbPDI_gbmLtk",
+      authDomain: "venx-online-market.firebaseapp.com",
+      projectId: "venx-online-market",
+      storageBucket: "venx-online-market.firebasestorage.app",
+      messagingSenderId: "820627929510",
+      appId: "1:820627929510:web:aa97704fbf1c6bf4077767",
+      measurementId: "G-BLH2T3CBVQ"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    let allBusinesses = [];
+    let currentFilter = "all";
+
+    // Real-time listener for business submissions
+    const q = query(collection(db, "businesses"), orderBy("createdAt", "desc"));
+
+    onSnapshot(q, (snapshot) => {
+      allBusinesses = [];
+      let pendingCount = 0;
+      let liveCount = 0;
+
+      snapshot.forEach((docSnap) => {
+        const item = { id: docSnap.id, ...docSnap.data() };
+        allBusinesses.push(item);
+
+        if (item.isLive) {
+          liveCount++;
+        } else {
+          pendingCount++;
+        }
+      });
+
+      // Update Top Metrics
+      document.getElementById("statTotal").textContent = allBusinesses.length;
+      document.getElementById("statPending").textContent = pendingCount;
+      document.getElementById("statLive").textContent = liveCount;
+
+      renderTable();
+    }, (error) => {
+      console.error("Firestore Error:", error);
+      document.getElementById("businessTableBody").innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state" style="color: red;">
+            Failed to load businesses. Check Firestore permission rules.
+          </td>
+        </tr>`;
+    });
+
+    // Render Table Rows
+    window.renderTable = function() {
+      const tbody = document.getElementById("businessTableBody");
+      const searchVal = document.getElementById("searchInput").value.toLowerCase();
+
+      let filtered = allBusinesses.filter(biz => {
+        const matchesFilter = 
+          currentFilter === "all" || 
+          (currentFilter === "pending" && !biz.isLive) || 
+          (currentFilter === "live" && biz.isLive);
+
+        const textSearch = `${biz.businessName || ''} ${biz.phone || ''} ${biz.paymentPhoneNumber || ''} ${biz.transactionReference || ''}`.toLowerCase();
+        const matchesSearch = textSearch.includes(searchVal);
+
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px;"></i>
+              <p>No business records found matching the criteria.</p>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(biz => {
+        const curr = biz.currency || "UGX";
+        const fee = biz.registrationFeeAmount ? biz.registrationFeeAmount.toLocaleString() : "3,000";
+        
+        return `
+          <tr>
+            <td>
+              <div class="biz-name">${biz.businessName || 'Unnamed Business'}</div>
+              <div class="biz-sub"><i class="fa-solid fa-location-dot"></i> ${biz.address || 'No Address'}</div>
+              <div class="biz-sub"><i class="fa-solid fa-phone"></i> ${biz.phone || 'No Phone'}</div>
+            </td>
+            <td>
+              <strong>${biz.package || 'Basic'}</strong>
+              <div class="biz-sub">Limit: ${biz.itemLimit || '15'} Items</div>
+            </td>
+            <td>
+              <div><strong>Paid:</strong> ${curr} ${fee}</div>
+              <div class="biz-sub">MoMo Phone: <strong>${biz.paymentPhoneNumber || 'N/A'}</strong></div>
+              <div class="biz-sub">Txn Ref: <strong>${biz.transactionReference || 'N/A'}</strong></div>
+            </td>
+            <td>
+              ${biz.isLive ? 
+                `<span class="badge-status status-live"><i class="fa-solid fa-circle"></i> Live</span>` : 
+                `<span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Pending Approval</span>`
+              }
+            </td>
+            <td>
+              ${biz.isLive ? `
+                <button class="btn-revoke" onclick="toggleApproval('${biz.id}', false)">
+                  <i class="fa-solid fa-ban"></i> Suspend
+                </button>
+              ` : `
+                <button class="btn-approve" onclick="toggleApproval('${biz.id}', true)">
+                  <i class="fa-solid fa-check"></i> Approve & Set Live
+                </button>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    };
+
+    // Toggle Approval Handler (Sets isLive in Firestore)
+    window.toggleApproval = async function(docId, setLiveStatus) {
+      try {
+        const bizRef = doc(db, "businesses", docId);
+        await updateDoc(bizRef, {
+          isLive: setLiveStatus,
+          status: setLiveStatus ? "approved" : "suspended",
+          registrationFeeStatus: setLiveStatus ? "verified" : "pending_verification"
+        });
+
+        alert(`Business status updated: ${setLiveStatus ? 'Approved & Live' : 'Suspended'}`);
+      } catch (err) {
+        console.error("Error updating approval status:", err);
+        alert("Failed to update status. Make sure you have admin write permissions.");
+      }
+    };
+
+    // Filter Handlers
+    window.setFilter = function(filterType, btnElem) {
+      currentFilter = filterType;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btnElem.classList.add("active");
+      renderTable();
+    };
+
+    // Search input event
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+  </script>
+
+</body>
+</html>
