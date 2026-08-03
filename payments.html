@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Logs & Escrow - Venx Online Market Admin</title>
+  <title>Payment Logs & Reg Fees - Venx Admin Panel</title>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -19,6 +19,7 @@
       --danger-color: #dc2626;
       --success-color: #16a34a;
       --info-color: #0284c7;
+      --purple-color: #7e22ce;
     }
 
     * {
@@ -63,6 +64,30 @@
       border-radius: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-export {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.4);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-export:hover {
+      background: rgba(255,255,255,0.3);
     }
 
     /* --- Quick Nav Section --- */
@@ -152,7 +177,7 @@
     .icon-green { background: #e6fffa; color: var(--primary-color); }
     .icon-yellow { background: #fff8e6; color: var(--warning-color); }
     .icon-blue { background: #e0f2fe; color: var(--info-color); }
-    .icon-purple { background: #f3e8ff; color: #7e22ce; }
+    .icon-purple { background: #f3e8ff; color: var(--purple-color); }
 
     /* --- Controls & Filter Bar --- */
     .controls-card {
@@ -246,7 +271,7 @@
       margin-top: 2px;
     }
 
-    /* Type & Status Badges */
+    /* Badges & Grace Period Indicators */
     .badge-type {
       display: inline-block;
       padding: 3px 8px;
@@ -257,9 +282,25 @@
       letter-spacing: 0.3px;
     }
 
-    .type-registration { background: #e0f2fe; color: #0369a1; }
-    .type-escrow { background: #fef3c7; color: #b45309; }
-    .type-disbursement { background: #e6fffa; color: #047857; }
+    .type-mandatory-reg { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .type-package { background: #f3e8ff; color: #7e22ce; }
+    .type-escrow { background: #e0f2fe; color: #0369a1; }
+
+    .badge-grace {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #dcfce7;
+      color: #15803d;
+      margin-top: 4px;
+    }
+
+    .badge-grace-expired {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
 
     .badge-status {
       display: inline-block;
@@ -320,6 +361,11 @@
       <span>Venx Admin Panel</span>
       <span class="brand-badge">Control Center</span>
     </div>
+    <div class="header-actions">
+      <button class="btn-export" onclick="window.print()">
+        <i class="fa-solid fa-print"></i> Print Summary
+      </button>
+    </div>
   </header>
 
   <!-- Quick Navigation Bar -->
@@ -347,11 +393,21 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-info">
-          <h4>Total Volume Processed</h4>
-          <div class="stat-value" id="statTotalVolume">UGX 0</div>
+          <h4>Mandatory Reg Revenue</h4>
+          <div class="stat-value" id="statRegRevenue" style="color: var(--primary-color);">UGX 0</div>
         </div>
         <div class="stat-icon icon-green">
-          <i class="fa-solid fa-wallet"></i>
+          <i class="fa-solid fa-id-card"></i>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Vendors in 12-Mo Grace</h4>
+          <div class="stat-value" id="statGraceActiveCount" style="color: var(--purple-color);">0</div>
+        </div>
+        <div class="stat-icon icon-purple">
+          <i class="fa-solid fa-gift"></i>
         </div>
       </div>
 
@@ -362,16 +418,6 @@
         </div>
         <div class="stat-icon icon-blue">
           <i class="fa-solid fa-shield-halved"></i>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-info">
-          <h4>Reg Fees Revenue</h4>
-          <div class="stat-value" id="statRegRevenue" style="color: #7e22ce;">UGX 0</div>
-        </div>
-        <div class="stat-icon icon-purple">
-          <i class="fa-solid fa-receipt"></i>
         </div>
       </div>
 
@@ -388,14 +434,14 @@
 
     <!-- Filter and Search Bar -->
     <div class="controls-card">
-      <input type="text" id="searchInput" class="search-input" placeholder="Search by Txn Ref, Payer Name, Phone, or Order ID...">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by Txn Ref, Business Name, Phone, or Package Tier...">
       
       <div class="filter-btn-group">
         <button class="filter-btn active" onclick="setFilter('all', this)">All Logs</button>
-        <button class="filter-btn" onclick="setFilter('pending', this)">Pending MoMo</button>
-        <button class="filter-btn" onclick="setFilter('escrow', this)">Escrow Held</button>
-        <button class="filter-btn" onclick="setFilter('registration', this)">Reg Fees</button>
-        <button class="filter-btn" onclick="setFilter('verified', this)">Verified / Released</button>
+        <button class="filter-btn" onclick="setFilter('registration', this)">📌 Mandatory Reg Fees</button>
+        <button class="filter-btn" onclick="setFilter('grace', this)">🎁 Active 12-Mo Grace</button>
+        <button class="filter-btn" onclick="setFilter('escrow', this)">🛡️ Escrow Orders</button>
+        <button class="filter-btn" onclick="setFilter('pending', this)">⏳ Pending Proofs</button>
       </div>
     </div>
 
@@ -404,10 +450,10 @@
       <table>
         <thead>
           <tr>
-            <th>Payment Details</th>
-            <th>Payer Information</th>
-            <th>Amount & Method</th>
-            <th>Verification Status</th>
+            <th>Transaction Details</th>
+            <th>Business / Payer</th>
+            <th>Fee & Package Tier</th>
+            <th>12-Month Grace Expiry</th>
             <th>Admin Actions</th>
           </tr>
         </thead>
@@ -415,7 +461,7 @@
           <tr>
             <td colspan="5" class="empty-state">
               <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
-              <p>Loading financial transactions from Firebase...</p>
+              <p>Loading transaction logs from Firebase...</p>
             </td>
           </tr>
         </tbody>
@@ -462,38 +508,51 @@
 
     onSnapshot(q, (snapshot) => {
       allPayments = [];
-      let totalVolume = 0;
-      let escrowVolume = 0;
       let regRevenue = 0;
+      let graceActiveCount = 0;
+      let escrowVolume = 0;
       let pendingCount = 0;
+
+      const now = new Date();
 
       snapshot.forEach((docSnap) => {
         const item = { id: docSnap.id, ...docSnap.data() };
         allPayments.push(item);
 
-        const amt = Number(item.amount) || 0;
+        const amt = Number(item.amount || item.registrationFeeAmount || 0);
         const status = (item.status || "pending").toLowerCase();
-        const type = (item.type || "escrow").toLowerCase();
+        const type = (item.type || "registration").toLowerCase();
 
-        totalVolume += amt;
+        // Check Reg Revenue
+        if ((type === "registration" || type === "mandatory_reg") && (status === "verified" || status === "completed" || status === "approved")) {
+          regRevenue += amt;
 
+          // Check if within 12-Month Grace Period
+          let paymentDate = item.createdAt?.toDate ? item.createdAt.toDate() : new Date(item.createdAt);
+          if (!isNaN(paymentDate)) {
+            let graceExpiry = new Date(paymentDate);
+            graceExpiry.setFullYear(graceExpiry.getFullYear() + 1); // 12 Months Grace
+            if (graceExpiry > now) {
+              graceActiveCount++;
+            }
+          }
+        }
+
+        // Check Escrow Held
         if (status === "escrow_held" || status === "in_escrow") {
           escrowVolume += amt;
         }
 
-        if (type === "registration" && (status === "verified" || status === "completed")) {
-          regRevenue += amt;
-        }
-
+        // Pending verifications
         if (status === "pending" || status === "pending_verification") {
           pendingCount++;
         }
       });
 
       // Update Top Metrics
-      document.getElementById("statTotalVolume").textContent = `UGX ${totalVolume.toLocaleString()}`;
-      document.getElementById("statEscrowVolume").textContent = `UGX ${escrowVolume.toLocaleString()}`;
       document.getElementById("statRegRevenue").textContent = `UGX ${regRevenue.toLocaleString()}`;
+      document.getElementById("statGraceActiveCount").textContent = graceActiveCount;
+      document.getElementById("statEscrowVolume").textContent = `UGX ${escrowVolume.toLocaleString()}`;
       document.getElementById("statPendingCount").textContent = pendingCount;
 
       renderTable();
@@ -511,19 +570,29 @@
     window.renderTable = function() {
       const tbody = document.getElementById("paymentsTableBody");
       const searchVal = document.getElementById("searchInput").value.toLowerCase();
+      const now = new Date();
 
       let filtered = allPayments.filter(pay => {
         const status = (pay.status || 'pending').toLowerCase();
-        const type = (pay.type || 'escrow').toLowerCase();
+        const type = (pay.type || 'registration').toLowerCase();
+
+        // Calculate grace active
+        let paymentDate = pay.createdAt?.toDate ? pay.createdAt.toDate() : new Date(pay.createdAt);
+        let isGraceActive = false;
+        if (!isNaN(paymentDate)) {
+          let graceExpiry = new Date(paymentDate);
+          graceExpiry.setFullYear(graceExpiry.getFullYear() + 1);
+          isGraceActive = (graceExpiry > now) && (status === 'verified' || status === 'approved' || status === 'completed');
+        }
 
         const matchesFilter = 
           currentFilter === "all" || 
-          (currentFilter === "pending" && (status === "pending" || status === "pending_verification")) || 
+          (currentFilter === "registration" && (type === "registration" || type === "mandatory_reg")) || 
+          (currentFilter === "grace" && isGraceActive) || 
           (currentFilter === "escrow" && (status === "escrow_held" || status === "in_escrow")) || 
-          (currentFilter === "registration" && type === "registration") || 
-          (currentFilter === "verified" && (status === "verified" || status === "released" || status === "completed"));
+          (currentFilter === "pending" && (status === "pending" || status === "pending_verification"));
 
-        const textSearch = `${pay.transactionRef || pay.reference || ''} ${pay.payerName || pay.name || ''} ${pay.payerPhone || pay.phone || ''} ${pay.orderId || ''}`.toLowerCase();
+        const textSearch = `${pay.transactionRef || pay.transactionReference || ''} ${pay.businessName || pay.payerName || ''} ${pay.packageName || pay.package || ''} ${pay.phone || pay.payerPhone || ''}`.toLowerCase();
         const matchesSearch = textSearch.includes(searchVal);
 
         return matchesFilter && matchesSearch;
@@ -534,7 +603,7 @@
           <tr>
             <td colspan="5" class="empty-state">
               <i class="fa-solid fa-file-circle-xmark" style="font-size: 24px; margin-bottom: 8px;"></i>
-              <p>No payment logs matching your filters were found.</p>
+              <p>No transaction logs matching your criteria were found.</p>
             </td>
           </tr>`;
         return;
@@ -542,71 +611,83 @@
 
       tbody.innerHTML = filtered.map(pay => {
         const curr = pay.currency || "UGX";
-        const amt = pay.amount ? pay.amount.toLocaleString() : "0";
+        const amt = (pay.amount || pay.registrationFeeAmount) ? Number(pay.amount || pay.registrationFeeAmount).toLocaleString() : "0";
         const status = (pay.status || 'pending').toLowerCase();
-        const type = (pay.type || 'escrow').toLowerCase();
-        
-        // Format Date
+        const type = (pay.type || 'registration').toLowerCase();
+        const packageName = pay.packageName || pay.package || "Standard Vendor Package";
+
+        // Date & 12-Month Grace Expiry Calculation
         let dateStr = "N/A";
+        let graceExpiryStr = "Pending Reg Verification";
+        let isGraceExpired = false;
+
         if (pay.createdAt) {
-          if (pay.createdAt.toDate) {
-            dateStr = pay.createdAt.toDate().toLocaleString();
-          } else if (typeof pay.createdAt === 'string') {
-            dateStr = pay.createdAt;
+          let paymentDate = pay.createdAt.toDate ? pay.createdAt.toDate() : new Date(pay.createdAt);
+          if (!isNaN(paymentDate)) {
+            dateStr = paymentDate.toLocaleDateString();
+            
+            // Add 12 Months
+            let graceExpiryDate = new Date(paymentDate);
+            graceExpiryDate.setFullYear(graceExpiryDate.getFullYear() + 1);
+            graceExpiryStr = graceExpiryDate.toLocaleDateString();
+
+            if (now > graceExpiryDate) {
+              isGraceExpired = true;
+            }
           }
         }
 
-        // Type Badge styling
-        let typeBadgeClass = "type-escrow";
-        let typeLabel = "Escrow Deposit";
-        if (type === 'registration') {
-          typeBadgeClass = "type-registration";
-          typeLabel = "Vendor Reg Fee";
-        } else if (type === 'disbursement') {
-          typeBadgeClass = "type-disbursement";
-          typeLabel = "Vendor Payout";
-        }
+        // Type Badge
+        let isMandatoryReg = (type === 'registration' || type === 'mandatory_reg');
+        let typeBadgeClass = isMandatoryReg ? "type-mandatory-reg" : (type === 'escrow' ? "type-escrow" : "type-package");
+        let typeLabel = isMandatoryReg ? "Mandatory Reg Fee" : (type === 'escrow' ? "Escrow Order" : "Package Renewal");
 
         return `
           <tr>
             <td>
               <div class="pay-title">${typeLabel}</div>
-              <div class="pay-sub"><i class="fa-solid fa-receipt"></i> Ref: <strong>${pay.transactionRef || pay.reference || 'N/A'}</strong></div>
-              ${pay.orderId ? `<div class="pay-sub"><i class="fa-solid fa-box"></i> Order: #${pay.orderId}</div>` : ''}
-              <div class="pay-sub"><i class="fa-solid fa-clock"></i> ${dateStr}</div>
+              <div class="pay-sub"><i class="fa-solid fa-receipt"></i> Txn Ref: <strong>${pay.transactionRef || pay.transactionReference || 'N/A'}</strong></div>
+              <div class="pay-sub"><i class="fa-solid fa-calendar-day"></i> Date: ${dateStr}</div>
             </td>
             <td>
-              <div style="font-weight: 700;">${pay.payerName || pay.businessName || 'Anonymous Payer'}</div>
-              <div class="pay-sub"><i class="fa-solid fa-mobile-screen"></i> MoMo: ${pay.payerPhone || pay.phone || 'N/A'}</div>
-              <div class="pay-sub"><i class="fa-solid fa-envelope"></i> ${pay.email || 'N/A'}</div>
+              <div style="font-weight: 700;">${pay.businessName || pay.payerName || 'Unnamed Vendor'}</div>
+              <div class="pay-sub"><i class="fa-solid fa-mobile-screen"></i> MoMo: ${pay.paymentPhoneNumber || pay.payerPhone || pay.phone || 'N/A'}</div>
             </td>
             <td>
               <div style="font-size: 15px; font-weight: 800; color: var(--primary-dark);">${curr} ${amt}</div>
-              <span class="badge-type ${typeBadgeClass}">${pay.paymentMethod || 'Mobile Money'}</span>
+              <span class="badge-type ${typeBadgeClass}">${typeLabel}</span>
+              <div class="pay-sub" style="margin-top: 4px;"><i class="fa-solid fa-box"></i> Tier: ${packageName}</div>
             </td>
             <td>
-              ${getStatusBadge(status)}
+              ${(status === 'verified' || status === 'approved' || status === 'completed') ? `
+                <span class="badge-grace ${isGraceExpired ? 'badge-grace-expired' : ''}">
+                  <i class="fa-solid ${isGraceExpired ? 'fa-clock' : 'fa-shield-heart'}"></i>
+                  ${isGraceExpired ? 'Grace Expired (' + graceExpiryStr + ')' : '12-Mo Grace Active (Expires ' + graceExpiryStr + ')'}
+                </span>
+              ` : `
+                <span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Pending Payment Proof</span>
+              `}
             </td>
             <td>
               <div class="action-group">
                 ${(status === 'pending' || status === 'pending_verification') ? `
                   <button class="btn-action btn-verify" onclick="updatePaymentStatus('${pay.id}', 'verified')">
-                    <i class="fa-solid fa-check"></i> Verify Payment
+                    <i class="fa-solid fa-check"></i> Verify & Activate Grace
                   </button>
                 ` : ''}
 
                 ${(status === 'escrow_held' || status === 'in_escrow') ? `
                   <button class="btn-action btn-release" onclick="updatePaymentStatus('${pay.id}', 'released')">
-                    <i class="fa-solid fa-money-bill-transfer"></i> Release Funds
+                    <i class="fa-solid fa-money-bill-transfer"></i> Release Escrow
                   </button>
                   <button class="btn-action btn-refund" onclick="updatePaymentStatus('${pay.id}', 'refunded')">
                     <i class="fa-solid fa-rotate-left"></i> Refund Buyer
                   </button>
                 ` : ''}
 
-                ${(status === 'verified' || status === 'released' || status === 'completed') ? `
+                ${(status === 'verified' || status === 'released' || status === 'completed' || status === 'approved') ? `
                   <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">
-                    <i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i> Settled
+                    <i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i> Active & Settled
                   </span>
                 ` : ''}
               </div>
@@ -616,26 +697,9 @@
       }).join('');
     };
 
-    // Format Status Badges
-    function getStatusBadge(status) {
-      switch (status) {
-        case 'verified':
-        case 'completed':
-        case 'released':
-          return `<span class="badge-status status-verified"><i class="fa-solid fa-circle-check"></i> Verified / Settled</span>`;
-        case 'escrow_held':
-        case 'in_escrow':
-          return `<span class="badge-status status-escrow"><i class="fa-solid fa-shield-halved"></i> Held in Escrow</span>`;
-        case 'refunded':
-          return `<span class="badge-status status-refunded"><i class="fa-solid fa-undo"></i> Refunded</span>`;
-        default:
-          return `<span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Pending MoMo Proof</span>`;
-      }
-    }
-
     // Update Payment Status in Firestore
     window.updatePaymentStatus = async function(docId, newStatus) {
-      let confirmMsg = `Are you sure you want to mark payment as '${newStatus}'?`;
+      let confirmMsg = `Confirm verifying this mandatory registration fee? This will activate the vendor's 12-month package grace period.`;
       if (newStatus === 'released') confirmMsg = "Confirm releasing escrow funds directly to the seller's mobile wallet?";
       if (newStatus === 'refunded') confirmMsg = "Confirm refunding this transaction back to the buyer?";
 
