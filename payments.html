@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Logs & Escrow - Venx Online Market Admin</title>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #0b8f4d;
+      --primary-dark: #086d3a;
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-main: #2c3e50;
+      --text-muted: #7f8c8d;
+      --border-color: #e2e8f0;
+      --warning-color: #d97706;
+      --danger-color: #dc2626;
+      --success-color: #16a34a;
+      --info-color: #0284c7;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-main);
+      padding-bottom: 40px;
+    }
+
+    /* --- Top Navbar --- */
+    header {
+      background: var(--primary-color);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .brand-badge {
+      background: rgba(255,255,255,0.2);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* --- Quick Nav Section --- */
+    .nav-bar {
+      background: white;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: #f1f5f9;
+      color: var(--text-main);
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .nav-btn.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    /* --- Container --- */
+    .container {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    /* --- Stats Overview Grid --- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 18px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-info h4 {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-info .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .icon-green { background: #e6fffa; color: var(--primary-color); }
+    .icon-yellow { background: #fff8e6; color: var(--warning-color); }
+    .icon-blue { background: #e0f2fe; color: var(--info-color); }
+    .icon-purple { background: #f3e8ff; color: #7e22ce; }
+
+    /* --- Controls & Filter Bar --- */
+    .controls-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-input {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      outline: none;
+      min-width: 280px;
+    }
+
+    .filter-btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--text-main);
+      color: white;
+      border-color: var(--text-main);
+    }
+
+    /* --- Table Styling --- */
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafc;
+      padding: 14px 16px;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .pay-title {
+      font-weight: 800;
+      color: var(--text-main);
+      font-size: 14px;
+    }
+
+    .pay-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Type & Status Badges */
+    .badge-type {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .type-registration { background: #e0f2fe; color: #0369a1; }
+    .type-escrow { background: #fef3c7; color: #b45309; }
+    .type-disbursement { background: #e6fffa; color: #047857; }
+
+    .badge-status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status-verified { background: #dcfce7; color: #15803d; }
+    .status-pending { background: #fef3c7; color: #b45309; }
+    .status-escrow { background: #e0f2fe; color: #0284c7; }
+    .status-refunded { background: #fee2e2; color: #b91c1c; }
+
+    /* Action Buttons */
+    .action-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+    }
+
+    .btn-verify { background: var(--primary-color); color: white; }
+    .btn-verify:hover { background: var(--primary-dark); }
+
+    .btn-release { background: #0284c7; color: white; }
+    .btn-release:hover { background: #0369a1; }
+
+    .btn-refund { background: #ef4444; color: white; }
+    .btn-refund:hover { background: #dc2626; }
+
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Admin Header -->
+  <header>
+    <div class="brand">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Venx Admin Panel</span>
+      <span class="brand-badge">Control Center</span>
+    </div>
+  </header>
+
+  <!-- Quick Navigation Bar -->
+  <div class="nav-bar">
+    <a href="index.html" class="nav-btn">
+      <i class="fa-solid fa-store"></i> Businesses
+    </a>
+    <a href="users.html" class="nav-btn">
+      <i class="fa-solid fa-users"></i> Users Management
+    </a>
+    <a href="payments.html" class="nav-btn active">
+      <i class="fa-solid fa-file-invoice-dollar"></i> Payment Logs
+    </a>
+    <a href="orders.html" class="nav-btn">
+      <i class="fa-solid fa-cart-shopping"></i> Marketplace Orders
+    </a>
+    <a href="announcements.html" class="nav-btn">
+      <i class="fa-solid fa-bullhorn"></i> Announcements
+    </a>
+  </div>
+
+  <div class="container">
+    
+    <!-- Overview Metrics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Total Volume Processed</h4>
+          <div class="stat-value" id="statTotalVolume">UGX 0</div>
+        </div>
+        <div class="stat-icon icon-green">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Held in Escrow</h4>
+          <div class="stat-value" id="statEscrowVolume" style="color: var(--info-color);">UGX 0</div>
+        </div>
+        <div class="stat-icon icon-blue">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Reg Fees Revenue</h4>
+          <div class="stat-value" id="statRegRevenue" style="color: #7e22ce;">UGX 0</div>
+        </div>
+        <div class="stat-icon icon-purple">
+          <i class="fa-solid fa-receipt"></i>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Pending Verifications</h4>
+          <div class="stat-value" id="statPendingCount" style="color: var(--warning-color);">0</div>
+        </div>
+        <div class="stat-icon icon-yellow">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter and Search Bar -->
+    <div class="controls-card">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by Txn Ref, Payer Name, Phone, or Order ID...">
+      
+      <div class="filter-btn-group">
+        <button class="filter-btn active" onclick="setFilter('all', this)">All Logs</button>
+        <button class="filter-btn" onclick="setFilter('pending', this)">Pending MoMo</button>
+        <button class="filter-btn" onclick="setFilter('escrow', this)">Escrow Held</button>
+        <button class="filter-btn" onclick="setFilter('registration', this)">Reg Fees</button>
+        <button class="filter-btn" onclick="setFilter('verified', this)">Verified / Released</button>
+      </div>
+    </div>
+
+    <!-- Payment Logs Management Table -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Payment Details</th>
+            <th>Payer Information</th>
+            <th>Amount & Method</th>
+            <th>Verification Status</th>
+            <th>Admin Actions</th>
+          </tr>
+        </thead>
+        <tbody id="paymentsTableBody">
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
+              <p>Loading financial transactions from Firebase...</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Firebase Script Integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-analytics.js";
+    import { 
+      getFirestore, 
+      collection, 
+      onSnapshot, 
+      doc, 
+      updateDoc, 
+      query, 
+      orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCX2jTRmAJjTXAv4cpNFbERbPDI_gbmLtk",
+      authDomain: "venx-online-market.firebaseapp.com",
+      projectId: "venx-online-market",
+      storageBucket: "venx-online-market.firebasestorage.app",
+      messagingSenderId: "820627929510",
+      appId: "1:820627929510:web:aa97704fbf1c6bf4077767",
+      measurementId: "G-BLH2T3CBVQ"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    let allPayments = [];
+    let currentFilter = "all";
+
+    // Real-time listener for "payments" collection
+    const q = query(collection(db, "payments"), orderBy("createdAt", "desc"));
+
+    onSnapshot(q, (snapshot) => {
+      allPayments = [];
+      let totalVolume = 0;
+      let escrowVolume = 0;
+      let regRevenue = 0;
+      let pendingCount = 0;
+
+      snapshot.forEach((docSnap) => {
+        const item = { id: docSnap.id, ...docSnap.data() };
+        allPayments.push(item);
+
+        const amt = Number(item.amount) || 0;
+        const status = (item.status || "pending").toLowerCase();
+        const type = (item.type || "escrow").toLowerCase();
+
+        totalVolume += amt;
+
+        if (status === "escrow_held" || status === "in_escrow") {
+          escrowVolume += amt;
+        }
+
+        if (type === "registration" && (status === "verified" || status === "completed")) {
+          regRevenue += amt;
+        }
+
+        if (status === "pending" || status === "pending_verification") {
+          pendingCount++;
+        }
+      });
+
+      // Update Top Metrics
+      document.getElementById("statTotalVolume").textContent = `UGX ${totalVolume.toLocaleString()}`;
+      document.getElementById("statEscrowVolume").textContent = `UGX ${escrowVolume.toLocaleString()}`;
+      document.getElementById("statRegRevenue").textContent = `UGX ${regRevenue.toLocaleString()}`;
+      document.getElementById("statPendingCount").textContent = pendingCount;
+
+      renderTable();
+    }, (error) => {
+      console.error("Firestore Error:", error);
+      document.getElementById("paymentsTableBody").innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state" style="color: red;">
+            Failed to load payment records. Verify Firestore rules for the "payments" collection.
+          </td>
+        </tr>`;
+    });
+
+    // Render Table Rows
+    window.renderTable = function() {
+      const tbody = document.getElementById("paymentsTableBody");
+      const searchVal = document.getElementById("searchInput").value.toLowerCase();
+
+      let filtered = allPayments.filter(pay => {
+        const status = (pay.status || 'pending').toLowerCase();
+        const type = (pay.type || 'escrow').toLowerCase();
+
+        const matchesFilter = 
+          currentFilter === "all" || 
+          (currentFilter === "pending" && (status === "pending" || status === "pending_verification")) || 
+          (currentFilter === "escrow" && (status === "escrow_held" || status === "in_escrow")) || 
+          (currentFilter === "registration" && type === "registration") || 
+          (currentFilter === "verified" && (status === "verified" || status === "released" || status === "completed"));
+
+        const textSearch = `${pay.transactionRef || pay.reference || ''} ${pay.payerName || pay.name || ''} ${pay.payerPhone || pay.phone || ''} ${pay.orderId || ''}`.toLowerCase();
+        const matchesSearch = textSearch.includes(searchVal);
+
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-file-circle-xmark" style="font-size: 24px; margin-bottom: 8px;"></i>
+              <p>No payment logs matching your filters were found.</p>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(pay => {
+        const curr = pay.currency || "UGX";
+        const amt = pay.amount ? pay.amount.toLocaleString() : "0";
+        const status = (pay.status || 'pending').toLowerCase();
+        const type = (pay.type || 'escrow').toLowerCase();
+        
+        // Format Date
+        let dateStr = "N/A";
+        if (pay.createdAt) {
+          if (pay.createdAt.toDate) {
+            dateStr = pay.createdAt.toDate().toLocaleString();
+          } else if (typeof pay.createdAt === 'string') {
+            dateStr = pay.createdAt;
+          }
+        }
+
+        // Type Badge styling
+        let typeBadgeClass = "type-escrow";
+        let typeLabel = "Escrow Deposit";
+        if (type === 'registration') {
+          typeBadgeClass = "type-registration";
+          typeLabel = "Vendor Reg Fee";
+        } else if (type === 'disbursement') {
+          typeBadgeClass = "type-disbursement";
+          typeLabel = "Vendor Payout";
+        }
+
+        return `
+          <tr>
+            <td>
+              <div class="pay-title">${typeLabel}</div>
+              <div class="pay-sub"><i class="fa-solid fa-receipt"></i> Ref: <strong>${pay.transactionRef || pay.reference || 'N/A'}</strong></div>
+              ${pay.orderId ? `<div class="pay-sub"><i class="fa-solid fa-box"></i> Order: #${pay.orderId}</div>` : ''}
+              <div class="pay-sub"><i class="fa-solid fa-clock"></i> ${dateStr}</div>
+            </td>
+            <td>
+              <div style="font-weight: 700;">${pay.payerName || pay.businessName || 'Anonymous Payer'}</div>
+              <div class="pay-sub"><i class="fa-solid fa-mobile-screen"></i> MoMo: ${pay.payerPhone || pay.phone || 'N/A'}</div>
+              <div class="pay-sub"><i class="fa-solid fa-envelope"></i> ${pay.email || 'N/A'}</div>
+            </td>
+            <td>
+              <div style="font-size: 15px; font-weight: 800; color: var(--primary-dark);">${curr} ${amt}</div>
+              <span class="badge-type ${typeBadgeClass}">${pay.paymentMethod || 'Mobile Money'}</span>
+            </td>
+            <td>
+              ${getStatusBadge(status)}
+            </td>
+            <td>
+              <div class="action-group">
+                ${(status === 'pending' || status === 'pending_verification') ? `
+                  <button class="btn-action btn-verify" onclick="updatePaymentStatus('${pay.id}', 'verified')">
+                    <i class="fa-solid fa-check"></i> Verify Payment
+                  </button>
+                ` : ''}
+
+                ${(status === 'escrow_held' || status === 'in_escrow') ? `
+                  <button class="btn-action btn-release" onclick="updatePaymentStatus('${pay.id}', 'released')">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Release Funds
+                  </button>
+                  <button class="btn-action btn-refund" onclick="updatePaymentStatus('${pay.id}', 'refunded')">
+                    <i class="fa-solid fa-rotate-left"></i> Refund Buyer
+                  </button>
+                ` : ''}
+
+                ${(status === 'verified' || status === 'released' || status === 'completed') ? `
+                  <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">
+                    <i class="fa-solid fa-circle-check" style="color: var(--success-color);"></i> Settled
+                  </span>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    };
+
+    // Format Status Badges
+    function getStatusBadge(status) {
+      switch (status) {
+        case 'verified':
+        case 'completed':
+        case 'released':
+          return `<span class="badge-status status-verified"><i class="fa-solid fa-circle-check"></i> Verified / Settled</span>`;
+        case 'escrow_held':
+        case 'in_escrow':
+          return `<span class="badge-status status-escrow"><i class="fa-solid fa-shield-halved"></i> Held in Escrow</span>`;
+        case 'refunded':
+          return `<span class="badge-status status-refunded"><i class="fa-solid fa-undo"></i> Refunded</span>`;
+        default:
+          return `<span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Pending MoMo Proof</span>`;
+      }
+    }
+
+    // Update Payment Status in Firestore
+    window.updatePaymentStatus = async function(docId, newStatus) {
+      let confirmMsg = `Are you sure you want to mark payment as '${newStatus}'?`;
+      if (newStatus === 'released') confirmMsg = "Confirm releasing escrow funds directly to the seller's mobile wallet?";
+      if (newStatus === 'refunded') confirmMsg = "Confirm refunding this transaction back to the buyer?";
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const payRef = doc(db, "payments", docId);
+        await updateDoc(payRef, {
+          status: newStatus,
+          verifiedAt: new Date().toISOString()
+        });
+
+        alert(`Payment log updated to '${newStatus.toUpperCase()}' successfully!`);
+      } catch (err) {
+        console.error("Error updating payment record:", err);
+        alert("Failed to update payment status. Make sure you have Firestore admin write permissions.");
+      }
+    };
+
+    // Filter Handlers
+    window.setFilter = function(filterType, btnElem) {
+      currentFilter = filterType;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btnElem.classList.add("active");
+      renderTable();
+    };
+
+    // Search input listener
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+  </script>
+
+</body>
+</html>
