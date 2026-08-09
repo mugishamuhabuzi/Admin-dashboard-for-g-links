@@ -18,6 +18,7 @@
       --warning-color: #d97706;
       --danger-color: #dc2626;
       --success-color: #16a34a;
+      --info-color: #0284c7;
     }
 
     * {
@@ -64,7 +65,7 @@
       letter-spacing: 0.5px;
     }
 
-    /* --- Quick Nav Section --- */
+    /* --- Navigation Bar --- */
     .nav-bar {
       background: white;
       padding: 12px 24px;
@@ -87,6 +88,8 @@
       font-weight: 700;
       transition: all 0.2s;
       white-space: nowrap;
+      cursor: pointer;
+      border: none;
     }
 
     .nav-btn:hover {
@@ -100,7 +103,7 @@
 
     /* --- Container --- */
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 24px auto;
       padding: 0 16px;
     }
@@ -150,7 +153,9 @@
 
     .icon-green { background: #e6fffa; color: var(--primary-color); }
     .icon-yellow { background: #fff8e6; color: var(--warning-color); }
-    .icon-blue { background: #e0f2fe; color: #0284c7; }
+    .icon-blue { background: #e0f2fe; color: var(--info-color); }
+    .icon-purple { background: #f3e8ff; color: #9333ea; }
+    .icon-red { background: #fee2e2; color: var(--danger-color); }
 
     /* --- Controls & Filter Bar --- */
     .controls-card {
@@ -172,12 +177,13 @@
       border: 1px solid var(--border-color);
       font-size: 13px;
       outline: none;
-      min-width: 260px;
+      min-width: 280px;
     }
 
     .filter-btn-group {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .filter-btn {
@@ -196,7 +202,7 @@
       border-color: var(--text-main);
     }
 
-    /* --- Business Listings Table --- */
+    /* --- Data Table --- */
     .table-container {
       background: var(--card-bg);
       border-radius: 14px;
@@ -244,7 +250,9 @@
     }
 
     .badge-status {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       padding: 4px 8px;
       border-radius: 6px;
       font-size: 11px;
@@ -254,12 +262,13 @@
 
     .status-pending { background: #fef3c7; color: #b45309; }
     .status-live { background: #dcfce7; color: #15803d; }
+    .status-online { background: #e0f2fe; color: #0369a1; }
+    .status-busy { background: #fce7f3; color: #be185d; }
+    .status-offline { background: #f1f5f9; color: #64748b; }
     .status-suspended { background: #fee2e2; color: #b91c1c; }
 
-    .btn-approve {
-      padding: 8px 12px;
-      background: var(--primary-color);
-      color: white;
+    .btn-action {
+      padding: 7px 12px;
       border: none;
       border-radius: 6px;
       font-size: 12px;
@@ -271,32 +280,23 @@
       transition: background 0.2s;
     }
 
-    .btn-approve:hover {
-      background: var(--primary-dark);
-    }
+    .btn-approve { background: var(--primary-color); color: white; }
+    .btn-approve:hover { background: var(--primary-dark); }
 
-    .btn-revoke {
-      padding: 8px 12px;
-      background: #ef4444;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
+    .btn-revoke { background: #ef4444; color: white; }
+    .btn-revoke:hover { background: #dc2626; }
 
-    .btn-revoke:hover {
-      background: #dc2626;
-    }
+    .btn-secondary { background: #64748b; color: white; }
+    .btn-secondary:hover { background: #475569; }
 
     .empty-state {
       padding: 40px;
       text-align: center;
       color: var(--text-muted);
+    }
+
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
@@ -312,11 +312,13 @@
   </header>
 
   <!-- Quick Navigation Bar -->
- <!-- Quick Navigation Bar -->
   <div class="nav-bar">
-    <a href="index.html" class="nav-btn active">
+    <button class="nav-btn active" id="btnTabBusinesses" onclick="switchMainTab('businesses')">
       <i class="fa-solid fa-store"></i> Businesses
-    </a>
+    </button>
+    <button class="nav-btn" id="btnTabRiders" onclick="switchMainTab('riders')">
+      <i class="fa-solid fa-motorcycle"></i> Riders Fleet
+    </button>
     <a href="users.html" class="nav-btn">
       <i class="fa-solid fa-users"></i> Users Management
     </a>
@@ -331,71 +333,156 @@
     </a>
   </div>
 
-    <!-- Overview Metrics Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-info">
-          <h4>Total Businesses</h4>
-          <div class="stat-value" id="statTotal">0</div>
+  <div class="container">
+
+    <!-- ================= BUSINESSES SECTION ================= -->
+    <div id="sectionBusinesses">
+      <!-- Overview Metrics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Total Businesses</h4>
+            <div class="stat-value" id="statTotalBiz">0</div>
+          </div>
+          <div class="stat-icon icon-blue">
+            <i class="fa-solid fa-store"></i>
+          </div>
         </div>
-        <div class="stat-icon icon-blue">
-          <i class="fa-solid fa-store"></i>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Pending Approval</h4>
+            <div class="stat-value" id="statPendingBiz">0</div>
+          </div>
+          <div class="stat-icon icon-yellow">
+            <i class="fa-solid fa-clock"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Live Vendors</h4>
+            <div class="stat-value" id="statLiveBiz">0</div>
+          </div>
+          <div class="stat-icon icon-green">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-info">
-          <h4>Pending Approval</h4>
-          <div class="stat-value" id="statPending">0</div>
-        </div>
-        <div class="stat-icon icon-yellow">
-          <i class="fa-solid fa-clock"></i>
+      <!-- Filter and Search Bar -->
+      <div class="controls-card">
+        <input type="text" id="searchBizInput" class="search-input" placeholder="Search business name, phone, ref...">
+        <div class="filter-btn-group">
+          <button class="filter-btn active" onclick="setBizFilter('all', this)">All</button>
+          <button class="filter-btn" onclick="setBizFilter('pending', this)">Pending Approval</button>
+          <button class="filter-btn" onclick="setBizFilter('live', this)">Live Marketplace</button>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-info">
-          <h4>Live Vendors</h4>
-          <div class="stat-value" id="statLive">0</div>
-        </div>
-        <div class="stat-icon icon-green">
-          <i class="fa-solid fa-circle-check"></i>
-        </div>
+      <!-- Business Management Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Business Details</th>
+              <th>Package & Limit</th>
+              <th>Payment Verification</th>
+              <th>Live Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="businessTableBody">
+            <tr>
+              <td colspan="5" class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
+                <p>Loading business records from Firebase...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Filter and Search Bar -->
-    <div class="controls-card">
-      <input type="text" id="searchInput" class="search-input" placeholder="Search by name, phone, or reference...">
-      
-      <div class="filter-btn-group">
-        <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
-        <button class="filter-btn" onclick="setFilter('pending', this)">Pending Approval</button>
-        <button class="filter-btn" onclick="setFilter('live', this)">Live Marketplace</button>
-      </div>
-    </div>
 
-    <!-- Businesses Management Table -->
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Business Details</th>
-            <th>Package & Limit</th>
-            <th>Payment Verification</th>
-            <th>Live Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="businessTableBody">
-          <tr>
-            <td colspan="5" class="empty-state">
-              <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
-              <p>Loading business records from Firebase...</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- ================= RIDERS FLEET SECTION ================= -->
+    <div id="sectionRiders" class="hidden">
+      <!-- Overview Metrics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Total Registered Riders</h4>
+            <div class="stat-value" id="statTotalRiders">0</div>
+          </div>
+          <div class="stat-icon icon-purple">
+            <i class="fa-solid fa-motorcycle"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Online / Idle</h4>
+            <div class="stat-value" id="statOnlineRiders">0</div>
+          </div>
+          <div class="stat-icon icon-blue">
+            <i class="fa-solid fa-signal"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Active Deliveries</h4>
+            <div class="stat-value" id="statBusyRiders">0</div>
+          </div>
+          <div class="stat-icon icon-green">
+            <i class="fa-solid fa-box-taped"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Unverified Riders</h4>
+            <div class="stat-value" id="statPendingRiders">0</div>
+          </div>
+          <div class="stat-icon icon-yellow">
+            <i class="fa-solid fa-user-clock"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter and Search Bar -->
+      <div class="controls-card">
+        <input type="text" id="searchRiderInput" class="search-input" placeholder="Search rider name, phone, plate number...">
+        <div class="filter-btn-group">
+          <button class="filter-btn active" onclick="setRiderFilter('all', this)">All Riders</button>
+          <button class="filter-btn" onclick="setRiderFilter('online', this)">Online / Active</button>
+          <button class="filter-btn" onclick="setRiderFilter('delivering', this)">On Delivery</button>
+          <button class="filter-btn" onclick="setRiderFilter('unverified', this)">Unverified</button>
+        </div>
+      </div>
+
+      <!-- Riders Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Rider Profile</th>
+              <th>Vehicle & Plate</th>
+              <th>Duty State</th>
+              <th>Verification</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="riderTableBody">
+            <tr>
+              <td colspan="5" class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
+                <p>Loading rider fleet records from Firebase...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -430,13 +517,37 @@
     const analytics = getAnalytics(app);
     const db = getFirestore(app);
 
+    // State Variables
     let allBusinesses = [];
-    let currentFilter = "all";
+    let currentBizFilter = "all";
 
-    // Real-time listener for business submissions
-    const q = query(collection(db, "businesses"), orderBy("createdAt", "desc"));
+    let allRiders = [];
+    let currentRiderFilter = "all";
 
-    onSnapshot(q, (snapshot) => {
+    // ================= MAIN TAB SWITCHER =================
+    window.switchMainTab = function(tabName) {
+      const bizSec = document.getElementById("sectionBusinesses");
+      const riderSec = document.getElementById("sectionRiders");
+      const btnBiz = document.getElementById("btnTabBusinesses");
+      const btnRider = document.getElementById("btnTabRiders");
+
+      if (tabName === 'businesses') {
+        bizSec.classList.remove("hidden");
+        riderSec.classList.add("hidden");
+        btnBiz.classList.add("active");
+        btnRider.classList.remove("active");
+      } else {
+        bizSec.classList.add("hidden");
+        riderSec.classList.remove("hidden");
+        btnBiz.classList.remove("active");
+        btnRider.classList.add("active");
+      }
+    };
+
+    // ================= REAL-TIME BUSINESSES LISTENER =================
+    const bizQuery = query(collection(db, "businesses"), orderBy("createdAt", "desc"));
+
+    onSnapshot(bizQuery, (snapshot) => {
       allBusinesses = [];
       let pendingCount = 0;
       let liveCount = 0;
@@ -452,14 +563,13 @@
         }
       });
 
-      // Update Top Metrics
-      document.getElementById("statTotal").textContent = allBusinesses.length;
-      document.getElementById("statPending").textContent = pendingCount;
-      document.getElementById("statLive").textContent = liveCount;
+      document.getElementById("statTotalBiz").textContent = allBusinesses.length;
+      document.getElementById("statPendingBiz").textContent = pendingCount;
+      document.getElementById("statLiveBiz").textContent = liveCount;
 
-      renderTable();
+      renderBizTable();
     }, (error) => {
-      console.error("Firestore Error:", error);
+      console.error("Firestore Error (Businesses):", error);
       document.getElementById("businessTableBody").innerHTML = `
         <tr>
           <td colspan="5" class="empty-state" style="color: red;">
@@ -468,16 +578,50 @@
         </tr>`;
     });
 
-    // Render Table Rows
-    window.renderTable = function() {
+    // ================= REAL-TIME RIDERS LISTENER =================
+    const riderQuery = query(collection(db, "riders"), orderBy("createdAt", "desc"));
+
+    onSnapshot(riderQuery, (snapshot) => {
+      allRiders = [];
+      let onlineCount = 0;
+      let busyCount = 0;
+      let pendingCount = 0;
+
+      snapshot.forEach((docSnap) => {
+        const item = { id: docSnap.id, ...docSnap.data() };
+        allRiders.push(item);
+
+        if (item.isOnline && !item.isBusy) onlineCount++;
+        if (item.isBusy) busyCount++;
+        if (!item.isApproved && !item.isVerified) pendingCount++;
+      });
+
+      document.getElementById("statTotalRiders").textContent = allRiders.length;
+      document.getElementById("statOnlineRiders").textContent = onlineCount;
+      document.getElementById("statBusyRiders").textContent = busyCount;
+      document.getElementById("statPendingRiders").textContent = pendingCount;
+
+      renderRiderTable();
+    }, (error) => {
+      console.error("Firestore Error (Riders):", error);
+      document.getElementById("riderTableBody").innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state" style="color: red;">
+            Failed to load riders collection. Ensure the 'riders' collection exists.
+          </td>
+        </tr>`;
+    });
+
+    // ================= RENDER BUSINESS TABLE =================
+    window.renderBizTable = function() {
       const tbody = document.getElementById("businessTableBody");
-      const searchVal = document.getElementById("searchInput").value.toLowerCase();
+      const searchVal = document.getElementById("searchBizInput").value.toLowerCase();
 
       let filtered = allBusinesses.filter(biz => {
         const matchesFilter = 
-          currentFilter === "all" || 
-          (currentFilter === "pending" && !biz.isLive) || 
-          (currentFilter === "live" && biz.isLive);
+          currentBizFilter === "all" || 
+          (currentBizFilter === "pending" && !biz.isLive) || 
+          (currentBizFilter === "live" && biz.isLive);
 
         const textSearch = `${biz.businessName || ''} ${biz.phone || ''} ${biz.paymentPhoneNumber || ''} ${biz.transactionReference || ''}`.toLowerCase();
         const matchesSearch = textSearch.includes(searchVal);
@@ -524,11 +668,11 @@
             </td>
             <td>
               ${biz.isLive ? `
-                <button class="btn-revoke" onclick="toggleApproval('${biz.id}', false)">
+                <button class="btn-action btn-revoke" onclick="toggleApproval('${biz.id}', false)">
                   <i class="fa-solid fa-ban"></i> Suspend
                 </button>
               ` : `
-                <button class="btn-approve" onclick="toggleApproval('${biz.id}', true)">
+                <button class="btn-action btn-approve" onclick="toggleApproval('${biz.id}', true)">
                   <i class="fa-solid fa-check"></i> Approve & Set Live
                 </button>
               `}
@@ -538,7 +682,86 @@
       }).join('');
     };
 
-    // Toggle Approval Handler (Sets isLive in Firestore)
+    // ================= RENDER RIDERS TABLE =================
+    window.renderRiderTable = function() {
+      const tbody = document.getElementById("riderTableBody");
+      const searchVal = document.getElementById("searchRiderInput").value.toLowerCase();
+
+      let filtered = allRiders.filter(rider => {
+        const isApproved = rider.isApproved || rider.isVerified || false;
+        const matchesFilter = 
+          currentRiderFilter === "all" || 
+          (currentRiderFilter === "online" && rider.isOnline && !rider.isBusy) || 
+          (currentRiderFilter === "delivering" && rider.isBusy) ||
+          (currentRiderFilter === "unverified" && !isApproved);
+
+        const textSearch = `${rider.fullName || rider.name || ''} ${rider.phone || ''} ${rider.plateNumber || ''} ${rider.vehicleType || ''}`.toLowerCase();
+        const matchesSearch = textSearch.includes(searchVal);
+
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-motorcycle" style="font-size: 24px; margin-bottom: 8px;"></i>
+              <p>No rider records found matching the criteria.</p>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(rider => {
+        const isApproved = rider.isApproved || rider.isVerified || false;
+        
+        // Duty Badge
+        let dutyBadge = `<span class="badge-status status-offline"><i class="fa-solid fa-circle"></i> Offline</span>`;
+        if (rider.isBusy) {
+          dutyBadge = `<span class="badge-status status-busy"><i class="fa-solid fa-truck-fast"></i> On Delivery</span>`;
+        } else if (rider.isOnline) {
+          dutyBadge = `<span class="badge-status status-online"><i class="fa-solid fa-signal"></i> Online / Ready</span>`;
+        }
+
+        return `
+          <tr>
+            <td>
+              <div class="biz-name">${rider.fullName || rider.name || 'Unnamed Rider'}</div>
+              <div class="biz-sub"><i class="fa-solid fa-phone"></i> ${rider.phone || 'No Phone'}</div>
+              <div class="biz-sub"><i class="fa-solid fa-id-card"></i> NIN/ID: ${rider.nationalId || 'N/A'}</div>
+            </td>
+            <td>
+              <strong>${rider.vehicleType || 'Boda Boda'}</strong>
+              <div class="biz-sub">Plate: <strong>${rider.plateNumber || 'No Plate'}</strong></div>
+              <div class="biz-sub">Stage/Base: ${rider.baseStage || 'Kampala'}</div>
+            </td>
+            <td>
+              ${dutyBadge}
+              ${rider.activeOrderId ? `<div class="biz-sub">Order: #${rider.activeOrderId.substring(0,8)}...</div>` : ''}
+            </td>
+            <td>
+              ${isApproved ? 
+                `<span class="badge-status status-live"><i class="fa-solid fa-check"></i> Verified</span>` : 
+                `<span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Unverified</span>`
+              }
+            </td>
+            <td>
+              ${isApproved ? `
+                <button class="btn-action btn-revoke" onclick="toggleRiderApproval('${rider.id}', false)">
+                  <i class="fa-solid fa-ban"></i> Suspend Rider
+                </button>
+              ` : `
+                <button class="btn-action btn-approve" onclick="toggleRiderApproval('${rider.id}', true)">
+                  <i class="fa-solid fa-check"></i> Verify Rider
+                </button>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    };
+
+    // ================= ACTIONS & HANDLERS =================
     window.toggleApproval = async function(docId, setLiveStatus) {
       try {
         const bizRef = doc(db, "businesses", docId);
@@ -547,7 +770,6 @@
           status: setLiveStatus ? "approved" : "suspended",
           registrationFeeStatus: setLiveStatus ? "verified" : "pending_verification"
         });
-
         alert(`Business status updated: ${setLiveStatus ? 'Approved & Live' : 'Suspended'}`);
       } catch (err) {
         console.error("Error updating approval status:", err);
@@ -555,16 +777,39 @@
       }
     };
 
-    // Filter Handlers
-    window.setFilter = function(filterType, btnElem) {
-      currentFilter = filterType;
-      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-      btnElem.classList.add("active");
-      renderTable();
+    window.toggleRiderApproval = async function(riderId, setApproved) {
+      try {
+        const riderRef = doc(db, "riders", riderId);
+        await updateDoc(riderRef, {
+          isApproved: setApproved,
+          isVerified: setApproved,
+          status: setApproved ? "active" : "suspended"
+        });
+        alert(`Rider status updated: ${setApproved ? 'Verified & Active' : 'Suspended'}`);
+      } catch (err) {
+        console.error("Error updating rider status:", err);
+        alert("Failed to update rider status. Check Firestore admin permissions.");
+      }
     };
 
-    // Search input event
-    document.getElementById("searchInput").addEventListener("input", renderTable);
+    // Filter Switchers
+    window.setBizFilter = function(filterType, btnElem) {
+      currentBizFilter = filterType;
+      document.querySelectorAll("#sectionBusinesses .filter-btn").forEach(b => b.classList.remove("active"));
+      btnElem.classList.add("active");
+      renderBizTable();
+    };
+
+    window.setRiderFilter = function(filterType, btnElem) {
+      currentRiderFilter = filterType;
+      document.querySelectorAll("#sectionRiders .filter-btn").forEach(b => b.classList.remove("active"));
+      btnElem.classList.add("active");
+      renderRiderTable();
+    };
+
+    // Search Listeners
+    document.getElementById("searchBizInput").addEventListener("input", renderBizTable);
+    document.getElementById("searchRiderInput").addEventListener("input", renderRiderTable);
   </script>
 
 </body>
