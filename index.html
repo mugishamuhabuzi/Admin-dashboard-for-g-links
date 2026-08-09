@@ -111,7 +111,7 @@
     /* --- Stats Overview Grid --- */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -267,14 +267,16 @@
     .status-offline { background: #f1f5f9; color: #64748b; }
     .status-suspended { background: #fee2e2; color: #b91c1c; }
 
-    .reason-text {
-      font-size: 11px;
-      color: var(--danger-color);
-      font-weight: 600;
+    .reason-tag {
+      display: inline-block;
       margin-top: 4px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      font-size: 11px;
+      font-weight: 600;
     }
 
     .btn-action {
@@ -293,11 +295,14 @@
     .btn-approve { background: var(--primary-color); color: white; }
     .btn-approve:hover { background: var(--primary-dark); }
 
+    .btn-revoke { background: #ef4444; color: white; }
+    .btn-revoke:hover { background: #dc2626; }
+
     .btn-suspend { background: #dc2626; color: white; }
     .btn-suspend:hover { background: #b91c1c; }
 
-    .btn-revoke { background: #ef4444; color: white; }
-    .btn-revoke:hover { background: #dc2626; }
+    .btn-secondary { background: #64748b; color: white; }
+    .btn-secondary:hover { background: #475569; }
 
     .empty-state {
       padding: 40px;
@@ -307,6 +312,77 @@
 
     .hidden {
       display: none !important;
+    }
+
+    /* --- Modal Styles --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .modal-card {
+      background: white;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h3 {
+      font-size: 18px;
+      color: var(--danger-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .form-select, .form-textarea {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
     }
   </style>
 </head>
@@ -421,7 +497,7 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-info">
-            <h4>Total Riders</h4>
+            <h4>Total Registered Riders</h4>
             <div class="stat-value" id="statTotalRiders">0</div>
           </div>
           <div class="stat-icon icon-purple">
@@ -451,7 +527,17 @@
 
         <div class="stat-card">
           <div class="stat-info">
-            <h4>Suspended (Indiscipline)</h4>
+            <h4>Unverified Riders</h4>
+            <div class="stat-value" id="statPendingRiders">0</div>
+          </div>
+          <div class="stat-icon icon-yellow">
+            <i class="fa-solid fa-user-clock"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Suspended / Inactive</h4>
             <div class="stat-value" id="statSuspendedRiders">0</div>
           </div>
           <div class="stat-icon icon-red">
@@ -462,7 +548,7 @@
 
       <!-- Filter and Search Bar -->
       <div class="controls-card">
-        <input type="text" id="searchRiderInput" class="search-input" placeholder="Search rider name, phone, plate, reason...">
+        <input type="text" id="searchRiderInput" class="search-input" placeholder="Search rider name, phone, plate, indiscipline reason...">
         <div class="filter-btn-group">
           <button class="filter-btn active" onclick="setRiderFilter('all', this)">All Riders</button>
           <button class="filter-btn" onclick="setRiderFilter('online', this)">Online / Active</button>
@@ -496,6 +582,44 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ================= INDISCIPLINE / SUSPENSION MODAL ================= -->
+  <div id="suspendRiderModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> Suspend / Inactivate Rider</h3>
+        <button onclick="closeSuspendModal()" style="border:none; background:none; font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted);">
+          Suspending <strong id="suspendRiderName">Rider</strong> will remove their active duty access and prevent them from receiving new customer orders.
+        </p>
+
+        <div class="form-group">
+          <label for="suspensionReasonSelect">Select Primary Indiscipline Reason</label>
+          <select id="suspensionReasonSelect" class="form-select">
+            <option value="Frequent / Unjustified Order Cancellations">Frequent / Unjustified Order Cancellations</option>
+            <option value="Customer Abuse or Rude Behavior">Customer Abuse or Rude Behavior</option>
+            <option value="Overcharging / Extortion Beyond Agreed Fare">Overcharging / Extortion Beyond Agreed Fare</option>
+            <option value="Refusing Orders / Inactivity while Online">Refusing Orders / Inactivity while Online</option>
+            <option value="Goods Damage or Missing Items">Goods Damage or Missing Items</option>
+            <option value="Reckless Driving / Traffic Violation">Reckless Driving / Traffic Violation</option>
+            <option value="Fake ID or Non-Matching Vehicle Plate">Fake ID or Non-Matching Vehicle Plate</option>
+            <option value="General Indiscipline / Policy Violation">General Indiscipline / Policy Violation</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="suspensionDetailsText">Additional Incident Notes (Optional)</label>
+          <textarea id="suspensionDetailsText" class="form-textarea" rows="3" placeholder="Provide details like order IDs, customer feedback, or specific incident report..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action btn-secondary" onclick="closeSuspendModal()">Cancel</button>
+        <button class="btn-action btn-suspend" onclick="confirmRiderSuspension()"><i class="fa-solid fa-user-slash"></i> Confirm Suspension</button>
+      </div>
+    </div>
   </div>
 
   <!-- Firebase Script Integration -->
@@ -534,6 +658,7 @@
 
     let allRiders = [];
     let currentRiderFilter = "all";
+    let selectedRiderIdForSuspension = null;
 
     // ================= MAIN TAB SWITCHER =================
     window.switchMainTab = function(tabName) {
@@ -596,6 +721,7 @@
       allRiders = [];
       let onlineCount = 0;
       let busyCount = 0;
+      let pendingCount = 0;
       let suspendedCount = 0;
 
       snapshot.forEach((docSnap) => {
@@ -604,14 +730,19 @@
 
         const isSuspended = item.status === "suspended" || item.isSuspended === true;
 
-        if (item.isOnline && !item.isBusy && !isSuspended) onlineCount++;
-        if (item.isBusy && !isSuspended) busyCount++;
-        if (isSuspended) suspendedCount++;
+        if (isSuspended) {
+          suspendedCount++;
+        } else {
+          if (item.isOnline && !item.isBusy) onlineCount++;
+          if (item.isBusy) busyCount++;
+          if (!item.isApproved && !item.isVerified) pendingCount++;
+        }
       });
 
       document.getElementById("statTotalRiders").textContent = allRiders.length;
       document.getElementById("statOnlineRiders").textContent = onlineCount;
       document.getElementById("statBusyRiders").textContent = busyCount;
+      document.getElementById("statPendingRiders").textContent = pendingCount;
       document.getElementById("statSuspendedRiders").textContent = suspendedCount;
 
       renderRiderTable();
@@ -711,7 +842,7 @@
           (currentRiderFilter === "unverified" && !isApproved && !isSuspended) ||
           (currentRiderFilter === "suspended" && isSuspended);
 
-        const textSearch = `${rider.fullName || rider.name || ''} ${rider.phone || ''} ${rider.plateNumber || ''} ${rider.vehicleType || ''} ${rider.suspensionReason || ''}`.toLowerCase();
+        const textSearch = `${rider.fullName || rider.name || ''} ${rider.phone || ''} ${rider.plateNumber || ''} ${rider.vehicleType || ''} ${rider.suspensionReason || ''} ${rider.suspensionDetails || ''}`.toLowerCase();
         const matchesSearch = textSearch.includes(searchVal);
 
         return matchesFilter && matchesSearch;
@@ -735,11 +866,46 @@
         // Duty Badge
         let dutyBadge = `<span class="badge-status status-offline"><i class="fa-solid fa-circle"></i> Offline</span>`;
         if (isSuspended) {
-          dutyBadge = `<span class="badge-status status-suspended"><i class="fa-solid fa-ban"></i> Inactive (Suspended)</span>`;
+          dutyBadge = `<span class="badge-status status-suspended"><i class="fa-solid fa-ban"></i> Inactive</span>`;
         } else if (rider.isBusy) {
           dutyBadge = `<span class="badge-status status-busy"><i class="fa-solid fa-truck-fast"></i> On Delivery</span>`;
         } else if (rider.isOnline) {
           dutyBadge = `<span class="badge-status status-online"><i class="fa-solid fa-signal"></i> Online / Ready</span>`;
+        }
+
+        // Account Status & Reason display
+        let accountStatusHtml = '';
+        if (isSuspended) {
+          accountStatusHtml = `
+            <span class="badge-status status-suspended"><i class="fa-solid fa-user-slash"></i> Suspended</span>
+            <div><span class="reason-tag"><i class="fa-solid fa-triangle-exclamation"></i> ${rider.suspensionReason || 'Indiscipline Violation'}</span></div>
+            ${rider.suspensionDetails ? `<div class="biz-sub">Notes: ${rider.suspensionDetails}</div>` : ''}
+          `;
+        } else if (isApproved) {
+          accountStatusHtml = `<span class="badge-status status-live"><i class="fa-solid fa-check"></i> Verified & Active</span>`;
+        } else {
+          accountStatusHtml = `<span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Unverified</span>`;
+        }
+
+        // Action Buttons
+        let actionButtonsHtml = '';
+        if (isSuspended) {
+          actionButtonsHtml = `
+            <button class="btn-action btn-approve" onclick="liftRiderSuspension('${rider.id}')">
+              <i class="fa-solid fa-rotate-left"></i> Reactivate Rider
+            </button>
+          `;
+        } else {
+          actionButtonsHtml = `
+            ${!isApproved ? `
+              <button class="btn-action btn-approve" onclick="toggleRiderApproval('${rider.id}', true)">
+                <i class="fa-solid fa-check"></i> Verify
+              </button>
+            ` : ''}
+            <button class="btn-action btn-suspend" onclick="openSuspendModal('${rider.id}', '${(rider.fullName || rider.name || 'Rider').replace(/'/g, "\\'")}')" title="Suspend for Indiscipline">
+              <i class="fa-solid fa-ban"></i> Suspend / Inactivate
+            </button>
+          `;
         }
 
         return `
@@ -759,25 +925,12 @@
               ${rider.activeOrderId && !isSuspended ? `<div class="biz-sub">Order: #${rider.activeOrderId.substring(0,8)}...</div>` : ''}
             </td>
             <td>
-              ${isSuspended ? `
-                <span class="badge-status status-suspended"><i class="fa-solid fa-triangle-exclamation"></i> Suspended</span>
-                <div class="reason-text"><i class="fa-solid fa-circle-exclamation"></i> Reason: ${rider.suspensionReason || 'Indiscipline'}</div>
-              ` : isApproved ? `
-                <span class="badge-status status-live"><i class="fa-solid fa-check"></i> Verified & Active</span>
-              ` : `
-                <span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Unverified</span>
-              `}
+              ${accountStatusHtml}
             </td>
             <td>
-              ${isSuspended ? `
-                <button class="btn-action btn-approve" onclick="liftRiderSuspension('${rider.id}')">
-                  <i class="fa-solid fa-rotate-left"></i> Lift Suspension
-                </button>
-              ` : `
-                <button class="btn-action btn-suspend" onclick="suspendRiderForIndiscipline('${rider.id}')" title="Inactivate for Indiscipline">
-                  <i class="fa-solid fa-user-slash"></i> Suspend / Inactivate
-                </button>
-              `}
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                ${actionButtonsHtml}
+              </div>
             </td>
           </tr>
         `;
@@ -800,30 +953,58 @@
       }
     };
 
-    // --- INDISCIPLINE & SUSPENSION HANDLERS ---
-    window.suspendRiderForIndiscipline = async function(riderId) {
-      const reason = prompt("Enter the specific reason for suspending/inactivating this rider (e.g., Customer Complaint, Late Deliveries, Overcharging, Indiscipline):");
-      
-      if (reason === null) return; // User canceled prompt
-
-      const trimmedReason = reason.trim() || "Indiscipline / Policy Violation";
-
+    window.toggleRiderApproval = async function(riderId, setApproved) {
       try {
         const riderRef = doc(db, "riders", riderId);
+        await updateDoc(riderRef, {
+          isApproved: setApproved,
+          isVerified: setApproved,
+          status: setApproved ? "active" : "unverified"
+        });
+        alert(`Rider verification updated: ${setApproved ? 'Verified & Active' : 'Unverified'}`);
+      } catch (err) {
+        console.error("Error updating rider status:", err);
+        alert("Failed to update rider status. Check Firestore admin permissions.");
+      }
+    };
+
+    // --- INDISCIPLINE & SUSPENSION MODAL HANDLERS ---
+    window.openSuspendModal = function(riderId, riderName) {
+      selectedRiderIdForSuspension = riderId;
+      document.getElementById("suspendRiderName").textContent = riderName;
+      document.getElementById("suspensionDetailsText").value = "";
+      document.getElementById("suspendRiderModal").classList.remove("hidden");
+    };
+
+    window.closeSuspendModal = function() {
+      selectedRiderIdForSuspension = null;
+      document.getElementById("suspendRiderModal").classList.add("hidden");
+    };
+
+    window.confirmRiderSuspension = async function() {
+      if (!selectedRiderIdForSuspension) return;
+
+      const reasonSelect = document.getElementById("suspensionReasonSelect").value;
+      const detailsText = document.getElementById("suspensionDetailsText").value.trim();
+
+      try {
+        const riderRef = doc(db, "riders", selectedRiderIdForSuspension);
         await updateDoc(riderRef, {
           status: "suspended",
           isSuspended: true,
           isApproved: false,
           isOnline: false,
           isBusy: false,
-          suspensionReason: trimmedReason,
+          suspensionReason: reasonSelect,
+          suspensionDetails: detailsText || null,
           suspendedAt: new Date().toISOString()
         });
 
-        alert(`Rider suspended and set to Inactive.\nReason: "${trimmedReason}"`);
+        alert(`Rider suspended successfully.\nReason: ${reasonSelect}`);
+        closeSuspendModal();
       } catch (err) {
         console.error("Error suspending rider:", err);
-        alert("Failed to suspend rider. Ensure you have admin Firestore permissions.");
+        alert("Failed to suspend rider. Ensure you have admin write permissions.");
       }
     };
 
@@ -837,13 +1018,14 @@
           isSuspended: false,
           isApproved: true,
           isVerified: true,
-          suspensionReason: null
+          suspensionReason: null,
+          suspensionDetails: null
         });
 
-        alert("Rider suspension lifted. Account set back to Verified & Active.");
+        alert("Rider suspension lifted. Account is now active.");
       } catch (err) {
-        console.error("Error lifting suspension:", err);
-        alert("Failed to reactivate rider. Check Firestore admin permissions.");
+        console.error("Error lifting rider suspension:", err);
+        alert("Failed to lift suspension. Check Firestore admin permissions.");
       }
     };
 
