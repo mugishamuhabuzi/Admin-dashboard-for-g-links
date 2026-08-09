@@ -267,6 +267,16 @@
     .status-offline { background: #f1f5f9; color: #64748b; }
     .status-suspended { background: #fee2e2; color: #b91c1c; }
 
+    .reason-text {
+      font-size: 11px;
+      color: var(--danger-color);
+      font-weight: 600;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
     .btn-action {
       padding: 7px 12px;
       border: none;
@@ -283,11 +293,11 @@
     .btn-approve { background: var(--primary-color); color: white; }
     .btn-approve:hover { background: var(--primary-dark); }
 
+    .btn-suspend { background: #dc2626; color: white; }
+    .btn-suspend:hover { background: #b91c1c; }
+
     .btn-revoke { background: #ef4444; color: white; }
     .btn-revoke:hover { background: #dc2626; }
-
-    .btn-secondary { background: #64748b; color: white; }
-    .btn-secondary:hover { background: #475569; }
 
     .empty-state {
       padding: 40px;
@@ -411,7 +421,7 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-info">
-            <h4>Total Registered Riders</h4>
+            <h4>Total Riders</h4>
             <div class="stat-value" id="statTotalRiders">0</div>
           </div>
           <div class="stat-icon icon-purple">
@@ -441,23 +451,24 @@
 
         <div class="stat-card">
           <div class="stat-info">
-            <h4>Unverified Riders</h4>
-            <div class="stat-value" id="statPendingRiders">0</div>
+            <h4>Suspended (Indiscipline)</h4>
+            <div class="stat-value" id="statSuspendedRiders">0</div>
           </div>
-          <div class="stat-icon icon-yellow">
-            <i class="fa-solid fa-user-clock"></i>
+          <div class="stat-icon icon-red">
+            <i class="fa-solid fa-user-slash"></i>
           </div>
         </div>
       </div>
 
       <!-- Filter and Search Bar -->
       <div class="controls-card">
-        <input type="text" id="searchRiderInput" class="search-input" placeholder="Search rider name, phone, plate number...">
+        <input type="text" id="searchRiderInput" class="search-input" placeholder="Search rider name, phone, plate, reason...">
         <div class="filter-btn-group">
           <button class="filter-btn active" onclick="setRiderFilter('all', this)">All Riders</button>
           <button class="filter-btn" onclick="setRiderFilter('online', this)">Online / Active</button>
           <button class="filter-btn" onclick="setRiderFilter('delivering', this)">On Delivery</button>
           <button class="filter-btn" onclick="setRiderFilter('unverified', this)">Unverified</button>
+          <button class="filter-btn" onclick="setRiderFilter('suspended', this)">Suspended / Inactive</button>
         </div>
       </div>
 
@@ -469,7 +480,7 @@
               <th>Rider Profile</th>
               <th>Vehicle & Plate</th>
               <th>Duty State</th>
-              <th>Verification</th>
+              <th>Account & Discipline Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -585,21 +596,23 @@
       allRiders = [];
       let onlineCount = 0;
       let busyCount = 0;
-      let pendingCount = 0;
+      let suspendedCount = 0;
 
       snapshot.forEach((docSnap) => {
         const item = { id: docSnap.id, ...docSnap.data() };
         allRiders.push(item);
 
-        if (item.isOnline && !item.isBusy) onlineCount++;
-        if (item.isBusy) busyCount++;
-        if (!item.isApproved && !item.isVerified) pendingCount++;
+        const isSuspended = item.status === "suspended" || item.isSuspended === true;
+
+        if (item.isOnline && !item.isBusy && !isSuspended) onlineCount++;
+        if (item.isBusy && !isSuspended) busyCount++;
+        if (isSuspended) suspendedCount++;
       });
 
       document.getElementById("statTotalRiders").textContent = allRiders.length;
       document.getElementById("statOnlineRiders").textContent = onlineCount;
       document.getElementById("statBusyRiders").textContent = busyCount;
-      document.getElementById("statPendingRiders").textContent = pendingCount;
+      document.getElementById("statSuspendedRiders").textContent = suspendedCount;
 
       renderRiderTable();
     }, (error) => {
@@ -689,13 +702,16 @@
 
       let filtered = allRiders.filter(rider => {
         const isApproved = rider.isApproved || rider.isVerified || false;
+        const isSuspended = rider.status === "suspended" || rider.isSuspended === true;
+
         const matchesFilter = 
           currentRiderFilter === "all" || 
-          (currentRiderFilter === "online" && rider.isOnline && !rider.isBusy) || 
-          (currentRiderFilter === "delivering" && rider.isBusy) ||
-          (currentRiderFilter === "unverified" && !isApproved);
+          (currentRiderFilter === "online" && rider.isOnline && !rider.isBusy && !isSuspended) || 
+          (currentRiderFilter === "delivering" && rider.isBusy && !isSuspended) ||
+          (currentRiderFilter === "unverified" && !isApproved && !isSuspended) ||
+          (currentRiderFilter === "suspended" && isSuspended);
 
-        const textSearch = `${rider.fullName || rider.name || ''} ${rider.phone || ''} ${rider.plateNumber || ''} ${rider.vehicleType || ''}`.toLowerCase();
+        const textSearch = `${rider.fullName || rider.name || ''} ${rider.phone || ''} ${rider.plateNumber || ''} ${rider.vehicleType || ''} ${rider.suspensionReason || ''}`.toLowerCase();
         const matchesSearch = textSearch.includes(searchVal);
 
         return matchesFilter && matchesSearch;
@@ -714,10 +730,13 @@
 
       tbody.innerHTML = filtered.map(rider => {
         const isApproved = rider.isApproved || rider.isVerified || false;
+        const isSuspended = rider.status === "suspended" || rider.isSuspended === true;
         
         // Duty Badge
         let dutyBadge = `<span class="badge-status status-offline"><i class="fa-solid fa-circle"></i> Offline</span>`;
-        if (rider.isBusy) {
+        if (isSuspended) {
+          dutyBadge = `<span class="badge-status status-suspended"><i class="fa-solid fa-ban"></i> Inactive (Suspended)</span>`;
+        } else if (rider.isBusy) {
           dutyBadge = `<span class="badge-status status-busy"><i class="fa-solid fa-truck-fast"></i> On Delivery</span>`;
         } else if (rider.isOnline) {
           dutyBadge = `<span class="badge-status status-online"><i class="fa-solid fa-signal"></i> Online / Ready</span>`;
@@ -737,22 +756,26 @@
             </td>
             <td>
               ${dutyBadge}
-              ${rider.activeOrderId ? `<div class="biz-sub">Order: #${rider.activeOrderId.substring(0,8)}...</div>` : ''}
+              ${rider.activeOrderId && !isSuspended ? `<div class="biz-sub">Order: #${rider.activeOrderId.substring(0,8)}...</div>` : ''}
             </td>
             <td>
-              ${isApproved ? 
-                `<span class="badge-status status-live"><i class="fa-solid fa-check"></i> Verified</span>` : 
-                `<span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Unverified</span>`
-              }
+              ${isSuspended ? `
+                <span class="badge-status status-suspended"><i class="fa-solid fa-triangle-exclamation"></i> Suspended</span>
+                <div class="reason-text"><i class="fa-solid fa-circle-exclamation"></i> Reason: ${rider.suspensionReason || 'Indiscipline'}</div>
+              ` : isApproved ? `
+                <span class="badge-status status-live"><i class="fa-solid fa-check"></i> Verified & Active</span>
+              ` : `
+                <span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Unverified</span>
+              `}
             </td>
             <td>
-              ${isApproved ? `
-                <button class="btn-action btn-revoke" onclick="toggleRiderApproval('${rider.id}', false)">
-                  <i class="fa-solid fa-ban"></i> Suspend Rider
+              ${isSuspended ? `
+                <button class="btn-action btn-approve" onclick="liftRiderSuspension('${rider.id}')">
+                  <i class="fa-solid fa-rotate-left"></i> Lift Suspension
                 </button>
               ` : `
-                <button class="btn-action btn-approve" onclick="toggleRiderApproval('${rider.id}', true)">
-                  <i class="fa-solid fa-check"></i> Verify Rider
+                <button class="btn-action btn-suspend" onclick="suspendRiderForIndiscipline('${rider.id}')" title="Inactivate for Indiscipline">
+                  <i class="fa-solid fa-user-slash"></i> Suspend / Inactivate
                 </button>
               `}
             </td>
@@ -777,18 +800,50 @@
       }
     };
 
-    window.toggleRiderApproval = async function(riderId, setApproved) {
+    // --- INDISCIPLINE & SUSPENSION HANDLERS ---
+    window.suspendRiderForIndiscipline = async function(riderId) {
+      const reason = prompt("Enter the specific reason for suspending/inactivating this rider (e.g., Customer Complaint, Late Deliveries, Overcharging, Indiscipline):");
+      
+      if (reason === null) return; // User canceled prompt
+
+      const trimmedReason = reason.trim() || "Indiscipline / Policy Violation";
+
       try {
         const riderRef = doc(db, "riders", riderId);
         await updateDoc(riderRef, {
-          isApproved: setApproved,
-          isVerified: setApproved,
-          status: setApproved ? "active" : "suspended"
+          status: "suspended",
+          isSuspended: true,
+          isApproved: false,
+          isOnline: false,
+          isBusy: false,
+          suspensionReason: trimmedReason,
+          suspendedAt: new Date().toISOString()
         });
-        alert(`Rider status updated: ${setApproved ? 'Verified & Active' : 'Suspended'}`);
+
+        alert(`Rider suspended and set to Inactive.\nReason: "${trimmedReason}"`);
       } catch (err) {
-        console.error("Error updating rider status:", err);
-        alert("Failed to update rider status. Check Firestore admin permissions.");
+        console.error("Error suspending rider:", err);
+        alert("Failed to suspend rider. Ensure you have admin Firestore permissions.");
+      }
+    };
+
+    window.liftRiderSuspension = async function(riderId) {
+      if (!confirm("Are you sure you want to lift the suspension and reactivate this rider?")) return;
+
+      try {
+        const riderRef = doc(db, "riders", riderId);
+        await updateDoc(riderRef, {
+          status: "active",
+          isSuspended: false,
+          isApproved: true,
+          isVerified: true,
+          suspensionReason: null
+        });
+
+        alert("Rider suspension lifted. Account set back to Verified & Active.");
+      } catch (err) {
+        console.error("Error lifting suspension:", err);
+        alert("Failed to reactivate rider. Check Firestore admin permissions.");
       }
     };
 
