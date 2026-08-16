@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rider Portal - Venx Online Market</title>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #0b8f4d;
+      --primary-dark: #086d3a;
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-main: #2c3e50;
+      --text-muted: #7f8c8d;
+      --border-color: #e2e8f0;
+      --warning-color: #d97706;
+      --danger-color: #dc2626;
+      --success-color: #16a34a;
+      --info-color: #0284c7;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-main);
+      padding-bottom: 40px;
+    }
+
+    /* --- Header --- */
+    header {
+      background: var(--primary-color);
+      padding: 16px 24px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .brand-badge {
+      background: rgba(255,255,255,0.2);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    /* --- Cards & Forms --- */
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 24px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-color);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: #64748b;
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: #475569;
+    }
+
+    /* --- Stats / Dashboard Grid --- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    .stat-card h4 {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .stat-card .val {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-active { background: #dcfce7; color: #15803d; }
+    .badge-pending { background: #fef3c7; color: #b45309; }
+    .badge-suspended { background: #fee2e2; color: #b91c1c; }
+
+    .toggle-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      margin-top: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Switch toggle styling */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 26px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--primary-color); }
+    input:checked + .slider:before { transform: translateX(24px); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <i class="fa-solid fa-motorcycle"></i>
+      <span>Venx Rider Portal</span>
+      <span class="brand-badge">Fleet App</span>
+    </div>
+    <div id="headerPhone" class="hidden" style="font-size: 13px; font-weight: 600;"></div>
+  </header>
+
+  <div class="container">
+
+    <!-- ================= REGISTRATION / LOGIN VIEW ================= -->
+    <div id="authView" class="card">
+      <h2><i class="fa-solid fa-user-shield"></i> Rider Login / Registration</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Enter your registered phone number to access your rider portal or sign up as a new rider.
+      </p>
+
+      <div class="form-group">
+        <label>Phone Number (MoMo)</label>
+        <input type="tel" id="authPhone" class="form-control" placeholder="e.g. 0771234567">
+      </div>
+
+      <div id="newRiderFields" class="hidden">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="regFullName" class="form-control" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label>Vehicle Type</label>
+          <select id="regVehicleType" class="form-control">
+            <option value="Boda Boda">Boda Boda (Motorcycle)</option>
+            <option value="Bicycle">Bicycle</option>
+            <option value="Car / Delivery Van">Car / Delivery Van</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Plate Number</label>
+          <input type="text" id="regPlateNumber" class="form-control" placeholder="e.g. UExxxA">
+        </div>
+        <div class="form-group">
+          <label>National ID / NIN</label>
+          <input type="text" id="regNationalId" class="form-control" placeholder="CMxxxxxxxxxxxx">
+        </div>
+        <div class="form-group">
+          <label>Base Stage / Location</label>
+          <input type="text" id="regBaseStage" class="form-control" placeholder="e.g. Makerere / Wandegeya">
+        </div>
+      </div>
+
+      <button class="btn" id="authSubmitBtn" onclick="handleAuth()">Continue / Register</button>
+    </div>
+
+
+    <!-- ================= DASHBOARD VIEW ================= -->
+    <div id="dashboardView" class="hidden">
+      
+      <!-- Status Card -->
+      <div class="card">
+        <h2><i class="fa-solid id-badge"></i> Account & Duty Status</h2>
+        <div style="margin-bottom: 12px;">
+          <strong>Approval Status:</strong> <span id="approvalBadge" class="status-badge badge-pending">Loading...</span>
+        </div>
+        <div id="suspensionNotice" class="hidden" style="color: var(--danger-color); font-size: 13px; margin-top: 8px;"></div>
+
+        <div class="toggle-container">
+          <div>
+            <strong>Duty State</strong>
+            <div style="font-size: 11px; color: var(--text-muted);">Toggle online to receive customer delivery orders</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="onlineToggle" onchange="toggleDutyState(this)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Financials / Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h4>Wallet Balance</h4>
+          <div class="val" id="walletBalanceVal">UGX 0</div>
+        </div>
+        <div class="stat-card">
+          <h4>COD Cash Held</h4>
+          <div class="val" id="codBalanceVal">UGX 0</div>
+        </div>
+      </div>
+
+      <!-- Profile Details Card -->
+      <div class="card">
+        <h2><i class="fa-solid fa-id-card"></i> Vehicle & Profile Info</h2>
+        <p><strong>Name:</strong> <span id="profileName">-</span></p>
+        <p><strong>Phone:</strong> <span id="profilePhone">-</span></p>
+        <p><strong>Vehicle:</strong> <span id="profileVehicle">-</span> (<span id="profilePlate">-</span>)</p>
+        <p><strong>Base Stage:</strong> <span id="profileStage">-</span></p>
+
+        <button class="btn btn-secondary" onclick="logoutRider()" style="margin-top: 20px;">
+          <i class="fa-solid fa-right-from-bracket"></i> Switch Account / Logout
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Firebase Script Integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      query, 
+      where, 
+      getDocs, 
+      addDoc, 
+      doc, 
+      onSnapshot, 
+      updateDoc,
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCX2jTRmAJjTXAv4cpNFbERbPDI_gbmLtk",
+      authDomain: "venx-online-market.firebaseapp.com",
+      projectId: "venx-online-market",
+      storageBucket: "venx-online-market.firebasestorage.app",
+      messagingSenderId: "820627929510",
+      appId: "1:820627929510:web:aa97704fbf1c6bf4077767",
+      measurementId: "G-BLH2T3CBVQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let currentRiderId = localStorage.getItem("venx_rider_id");
+    let unsubscribeSnapshot = null;
+
+    window.addEventListener("DOMContentLoaded", () => {
+      if (currentRiderId) {
+        loadRiderDashboard(currentRiderId);
+      }
+    });
+
+    window.handleAuth = async function() {
+      const phone = document.getElementById("authPhone").value.trim();
+      const newFields = document.getElementById("newRiderFields");
+      const submitBtn = document.getElementById("authSubmitBtn");
+
+      if (!phone) {
+        alert("Please enter a valid phone number.");
+        return;
+      }
+
+      try {
+        submitBtn.textContent = "Checking...";
+        const q = query(collection(db, "riders"), where("phone", "==", phone));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          // Rider exists, log in
+          const riderDoc = querySnapshot.docs[0];
+          localStorage.setItem("venx_rider_id", riderDoc.id);
+          loadRiderDashboard(riderDoc.id);
+        } else {
+          // Check if new fields are visible
+          if (newFields.classList.contains("hidden")) {
+            newFields.classList.remove("hidden");
+            submitBtn.textContent = "Complete Registration";
+            alert("Phone number not found. Please fill in your details below to register.");
+            return;
+          }
+
+          // Register new rider
+          const fullName = document.getElementById("regFullName").value.trim();
+          const vehicleType = document.getElementById("regVehicleType").value;
+          const plateNumber = document.getElementById("regPlateNumber").value.trim();
+          const nationalId = document.getElementById("regNationalId").value.trim();
+          const baseStage = document.getElementById("regBaseStage").value.trim();
+
+          if (!fullName || !plateNumber) {
+            alert("Please fill in your Full Name and Plate Number.");
+            submitBtn.textContent = "Continue / Register";
+            return;
+          }
+
+          const docRef = await addDoc(collection(db, "riders"), {
+            phone,
+            fullName,
+            vehicleType,
+            plateNumber,
+            nationalId,
+            baseStage,
+            isApproved: false,
+            isVerified: false,
+            isSuspended: false,
+            isOnline: false,
+            isBusy: false,
+            walletBalance: 0,
+            codBalance: 0,
+            createdAt: serverTimestamp()
+          });
+
+          localStorage.setItem("venx_rider_id", docRef.id);
+          alert("Registration successful! Your account is pending admin activation.");
+          loadRiderDashboard(docRef.id);
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+        alert("An error occurred. Check your internet connection.");
+        submitBtn.textContent = "Continue / Register";
+      }
+    };
+
+    function loadRiderDashboard(riderId) {
+      document.getElementById("authView").classList.add("hidden");
+      document.getElementById("dashboardView").classList.remove("hidden");
+      document.getElementById("headerPhone").classList.remove("hidden");
+
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+      unsubscribeSnapshot = onSnapshot(doc(db, "riders", riderId), (docSnap) => {
+        if (!docSnap.exists()) {
+          logoutRider();
+          return;
+        }
+
+        const data = docSnap.data();
+        document.getElementById("headerPhone").textContent = data.phone;
+        document.getElementById("profileName").textContent = data.fullName || data.name || "N/A";
+        document.getElementById("profilePhone").textContent = data.phone || "N/A";
+        document.getElementById("profileVehicle").textContent = data.vehicleType || "Boda Boda";
+        document.getElementById("profilePlate").textContent = data.plateNumber || "N/A";
+        document.getElementById("profileStage").textContent = data.baseStage || "Kampala";
+
+        document.getElementById("walletBalanceVal").textContent = `UGX ${(data.walletBalance || 0).toLocaleString()}`;
+        document.getElementById("codBalanceVal").textContent = `UGX ${(data.codBalance || 0).toLocaleString()}`;
+
+        const isSuspended = data.status === "suspended" || data.isSuspended === true;
+        const isApproved = data.isApproved || data.isVerified || false;
+        
+        const badge = document.getElementById("approvalBadge");
+        const suspensionNotice = document.getElementById("suspensionNotice");
+
+        if (isSuspended) {
+          badge.className = "status-badge badge-suspended";
+          badge.textContent = "Suspended / Inactive";
+          suspensionNotice.classList.remove("hidden");
+          suspensionNotice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Reason: ${data.suspensionReason || 'Policy Violation'}`;
+        } else if (isApproved) {
+          badge.className = "status-badge badge-active";
+          badge.textContent = "Verified & Active";
+          suspensionNotice.classList.add("hidden");
+        } else {
+          badge.className = "status-badge badge-pending";
+          badge.textContent = "Pending Admin Approval";
+          suspensionNotice.classList.add("hidden");
+        }
+
+        document.getElementById("onlineToggle").checked = data.isOnline || false;
+      });
+    }
+
+    window.toggleDutyState = async function(checkbox) {
+      if (!currentRiderId) return;
+      const isOnline = checkbox.checked;
+      try {
+        await updateDoc(doc(db, "riders", currentRiderId), {
+          isOnline: isOnline
+        });
+      } catch (err) {
+        console.error("Error updating status:", err);
+        alert("Failed to update duty state.");
+        checkbox.checked = !isOnline;
+      }
+    };
+
+    window.logoutRider = function() {
+      localStorage.removeItem("venx_rider_id");
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+      window.location.reload();
+    };
+  </script>
+
+</body>
+</html>
