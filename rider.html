@@ -317,8 +317,7 @@
     const auth = getAuth(app);
 
     // --- BACKEND API CONFIGURATION (Render.com Backend) ---
-    // Change this line in rider.html:
-const BACKEND_API_BASE = "https://g-links-backend.onrender.com/api";
+    const BACKEND_API_BASE = "https://g-links-backend.onrender.com/api";
 
     let currentRider = null;
     let riderData = null;
@@ -763,15 +762,17 @@ const BACKEND_API_BASE = "https://g-links-backend.onrender.com/api";
             riderId: currentRider.uid,
             phone: phone,
             amount: amount,
-            description: "Venx Rider Wallet Payout"
+            description: "Venx Rider Payout Withdrawal"
           })
         });
 
         const data = await response.json();
         if (!response.ok) throw new Error(data.message || "Payout request failed.");
 
-        alert(`Withdrawal of UGX ${amount.toLocaleString()} successfully initiated to ${phone}.`);
+        alert("Withdrawal request submitted successfully!");
         closeModal("withdrawModal");
+        document.getElementById("withdrawAmount").value = "";
+        document.getElementById("withdrawPhone").value = "";
       } catch (err) {
         alert(`Error: ${err.message}`);
       } finally {
@@ -780,19 +781,33 @@ const BACKEND_API_BASE = "https://g-links-backend.onrender.com/api";
       }
     };
 
-    // --- UI HELPERS ---
-    window.switchTab = (tab) => {
-      document.getElementById("tabAvailable").style.display = tab === 'available' ? 'block' : 'none';
-      document.getElementById("tabActive").style.display = tab === 'active' ? 'block' : 'none';
-      document.getElementById("tabBtnAvailable").classList.toggle("active", tab === 'available');
-      document.getElementById("tabBtnActive").classList.toggle("active", tab === 'active');
-      if (tab === 'active' && googleMap) {
-        setTimeout(() => google.maps.event.trigger(googleMap, 'resize'), 200);
-      }
+    // --- MODAL & TAB UTILITIES ---
+    window.openModal = (modalId) => {
+      document.getElementById(modalId).style.display = "flex";
     };
 
-    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
-    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+    window.closeModal = (modalId) => {
+      document.getElementById(modalId).style.display = "none";
+    };
+
+    window.switchTab = (tabName) => {
+      const tabAvailable = document.getElementById("tabAvailable");
+      const tabActive = document.getElementById("tabActive");
+      const btnAvailable = document.getElementById("tabBtnAvailable");
+      const btnActive = document.getElementById("tabBtnActive");
+
+      if (tabName === 'available') {
+        tabAvailable.style.display = "block";
+        tabActive.style.display = "none";
+        btnAvailable.className = "tab active";
+        btnActive.className = "tab";
+      } else {
+        tabAvailable.style.display = "none";
+        tabActive.style.display = "block";
+        btnAvailable.className = "tab";
+        btnActive.className = "tab active";
+      }
+    };
   </script>
 </body>
 </html>
