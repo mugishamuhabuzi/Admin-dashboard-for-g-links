@@ -329,6 +329,10 @@
     <button class="nav-btn" id="btnTabRiders" onclick="switchMainTab('riders')">
       <i class="fa-solid fa-motorcycle"></i> Riders Fleet
     </button>
+    <!-- Added Payouts Tab -->
+    <button class="nav-btn" id="btnTabPayouts" onclick="switchMainTab('payouts')">
+      <i class="fa-solid fa-money-bill-transfer"></i> Payout Approvals
+    </button>
     <a href="users.html" class="nav-btn">
       <i class="fa-solid fa-users"></i> Users Management
     </a>
@@ -341,7 +345,6 @@
     <a href="announcements.html" class="nav-btn">
       <i class="fa-solid fa-bullhorn"></i> Announcements
     </a>
-    <!-- Updated Connection Link to Local Rider Dashboard / Portal -->
     <a href="rider.html" target="_blank" class="nav-btn">
       <i class="fa-solid fa-external-link-alt"></i> Rider Portal
     </a>
@@ -500,6 +503,66 @@
       </div>
     </div>
 
+
+    <!-- ================= PAYOUT APPROVALS SECTION ================= -->
+    <div id="sectionPayouts" class="hidden">
+      <!-- Overview Metrics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Pending Payout Approvals</h4>
+            <div class="stat-value" id="statPendingPayouts">0</div>
+          </div>
+          <div class="stat-icon icon-yellow">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-info">
+            <h4>Approved Payouts</h4>
+            <div class="stat-value" id="statApprovedPayouts">0</div>
+          </div>
+          <div class="stat-icon icon-green">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter and Search Bar -->
+      <div class="controls-card">
+        <input type="text" id="searchPayoutInput" class="search-input" placeholder="Search order reference, customer, vendor...">
+        <div class="filter-btn-group">
+          <button class="filter-btn active" onclick="setPayoutFilter('all', this)">All Orders</button>
+          <button class="filter-btn" onclick="setPayoutFilter('pending', this)">Pending Admin Approval</button>
+          <button class="filter-btn" onclick="setPayoutFilter('approved', this)">Approved / Released</button>
+        </div>
+      </div>
+
+      <!-- Payouts Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Order Details</th>
+              <th>Customer Payment Status</th>
+              <th>Rider Confirmation</th>
+              <th>Admin Approval Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="payoutTableBody">
+            <tr>
+              <td colspan="5" class="empty-state">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
+                <p>Loading order payout records from Firebase...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <!-- Firebase Script Integration -->
@@ -539,23 +602,35 @@
     let allRiders = [];
     let currentRiderFilter = "all";
 
+    let allOrders = [];
+    let currentPayoutFilter = "all";
+
     // ================= MAIN TAB SWITCHER =================
     window.switchMainTab = function(tabName) {
       const bizSec = document.getElementById("sectionBusinesses");
       const riderSec = document.getElementById("sectionRiders");
+      const payoutSec = document.getElementById("sectionPayouts");
+      
       const btnBiz = document.getElementById("btnTabBusinesses");
       const btnRider = document.getElementById("btnTabRiders");
+      const btnPayouts = document.getElementById("btnTabPayouts");
+
+      bizSec.classList.add("hidden");
+      riderSec.classList.add("hidden");
+      payoutSec.classList.add("hidden");
+      btnBiz.classList.remove("active");
+      btnRider.classList.remove("active");
+      btnPayouts.classList.remove("active");
 
       if (tabName === 'businesses') {
         bizSec.classList.remove("hidden");
-        riderSec.classList.add("hidden");
         btnBiz.classList.add("active");
-        btnRider.classList.remove("active");
-      } else {
-        bizSec.classList.add("hidden");
+      } else if (tabName === 'riders') {
         riderSec.classList.remove("hidden");
-        btnBiz.classList.remove("active");
         btnRider.classList.add("active");
+      } else if (tabName === 'payouts') {
+        payoutSec.classList.remove("hidden");
+        btnPayouts.classList.add("active");
       }
     };
 
@@ -625,6 +700,39 @@
         <tr>
           <td colspan="5" class="empty-state" style="color: red;">
             Failed to load riders collection. Ensure the 'riders' collection exists.
+          </td>
+        </tr>`;
+    });
+
+    // ================= REAL-TIME ORDERS / PAYOUTS LISTENER =================
+    const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+
+    onSnapshot(ordersQuery, (snapshot) => {
+      allOrders = [];
+      let pendingPayoutCount = 0;
+      let approvedPayoutCount = 0;
+
+      snapshot.forEach((docSnap) => {
+        const item = { id: docSnap.id, ...docSnap.data() };
+        allOrders.push(item);
+
+        if (item.adminApproval === true) {
+          approvedPayoutCount++;
+        } else {
+          pendingPayoutCount++;
+        }
+      });
+
+      document.getElementById("statPendingPayouts").textContent = pendingPayoutCount;
+      document.getElementById("statApprovedPayouts").textContent = approvedPayoutCount;
+
+      renderPayoutTable();
+    }, (error) => {
+      console.error("Firestore Error (Orders/Payouts):", error);
+      document.getElementById("payoutTableBody").innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state" style="color: red;">
+            Failed to load orders collection for payouts.
           </td>
         </tr>`;
     });
@@ -736,7 +844,6 @@
         const isApproved = rider.isApproved || rider.isVerified || false;
         const isSuspended = rider.status === "suspended" || rider.isSuspended === true;
         
-        // Duty Badge
         let dutyBadge = `<span class="badge-status status-offline"><i class="fa-solid fa-circle"></i> Offline</span>`;
         if (isSuspended) {
           dutyBadge = `<span class="badge-status status-suspended"><i class="fa-solid fa-ban"></i> Inactive (Suspended)</span>`;
@@ -788,6 +895,85 @@
       }).join('');
     };
 
+    // ================= RENDER PAYOUTS TABLE =================
+    window.renderPayoutTable = function() {
+      const tbody = document.getElementById("payoutTableBody");
+      const searchVal = document.getElementById("searchPayoutInput").value.toLowerCase();
+
+      let filtered = allOrders.filter(order => {
+        const isApproved = order.adminApproval === true;
+        const matchesFilter = 
+          currentPayoutFilter === "all" || 
+          (currentPayoutFilter === "pending" && !isApproved) || 
+          (currentPayoutFilter === "approved" && isApproved);
+
+        const textSearch = `${order.id || ''} ${order.customerName || ''} ${order.vendorName || ''} ${order.paymentStatus || ''}`.toLowerCase();
+        const matchesSearch = textSearch.includes(searchVal);
+
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state">
+              <i class="fa-solid fa-file-invoice-dollar" style="font-size: 24px; margin-bottom: 8px;"></i>
+              <p>No payout records found matching the criteria.</p>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(order => {
+        const isApproved = order.adminApproval === true;
+        const paymentStatus = order.paymentStatus || "pending";
+        const riderStatus = order.riderStatus || order.deliveryStatus || "pending";
+
+        let paymentBadge = `<span class="badge-status status-pending">Pending</span>`;
+        if (paymentStatus.toLowerCase() === "completed" || paymentStatus.toLowerCase() === "successful") {
+          paymentBadge = `<span class="badge-status status-live">Completed</span>`;
+        }
+
+        let riderBadge = `<span class="badge-status status-pending">Pending</span>`;
+        if (riderStatus.toLowerCase() === "accepted" || riderStatus.toLowerCase() === "delivered") {
+          riderBadge = `<span class="badge-status status-live">Accepted / Delivered</span>`;
+        }
+
+        return `
+          <tr>
+            <td>
+              <div class="biz-name">Order #${order.id.substring(0, 8)}...</div>
+              <div class="biz-sub">Vendor: ${order.vendorName || 'N/A'}</div>
+              <div class="biz-sub">Amount: <strong>UGX ${(order.totalAmount || order.amount || 0).toLocaleString()}</strong></div>
+            </td>
+            <td>
+              ${paymentBadge}
+              <div class="biz-sub">Ref: ${order.pesapalTrackingId || order.transactionReference || 'N/A'}</div>
+            </td>
+            <td>
+              ${riderBadge}
+              <div class="biz-sub">Rider: ${order.riderName || 'Assigned Driver'}</div>
+            </td>
+            <td>
+              ${isApproved ? 
+                `<span class="badge-status status-live"><i class="fa-solid fa-check-circle"></i> Approved</span>` : 
+                `<span class="badge-status status-pending"><i class="fa-solid fa-clock"></i> Awaiting Admin Approval</span>`
+              }
+            </td>
+            <td>
+              ${isApproved ? `
+                <span style="font-size: 12px; color: var(--success-color); font-weight: 700;"><i class="fa-solid fa-check"></i> Released</span>
+              ` : `
+                <button class="btn-action btn-approve" onclick="approveOrderPayout('${order.id}')">
+                  <i class="fa-solid fa-check"></i> Approve Payout
+                </button>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    };
+
     // ================= ACTIONS & HANDLERS =================
     window.toggleApproval = async function(docId, setLiveStatus) {
       try {
@@ -804,11 +990,28 @@
       }
     };
 
+    // --- PAYOUT APPROVAL ACTION (STEP 3) ---
+    window.approveOrderPayout = async function(orderId) {
+      if (!confirm("Are you sure you want to approve this payout? This will update the admin approval status and trigger the backend disbursement validation.")) return;
+
+      try {
+        const orderRef = doc(db, "orders", orderId);
+        await updateDoc(orderRef, {
+          adminApproval: true,
+          adminApprovalAt: new Date().toISOString()
+        });
+        alert("Payout successfully approved! The backend will now verify triggers and execute release.");
+      } catch (err) {
+        console.error("Error approving payout:", err);
+        alert("Failed to approve payout. Check Firestore permissions.");
+      }
+    };
+
     // --- INDISCIPLINE & SUSPENSION HANDLERS ---
     window.suspendRiderForIndiscipline = async function(riderId) {
       const reason = prompt("Enter the specific reason for suspending/inactivating this rider (e.g., Customer Complaint, Late Deliveries, Overcharging, Indiscipline):");
       
-      if (reason === null) return; // User canceled prompt
+      if (reason === null) return;
 
       const trimmedReason = reason.trim() || "Indiscipline / Policy Violation";
 
@@ -866,9 +1069,17 @@
       renderRiderTable();
     };
 
+    window.setPayoutFilter = function(filterType, btnElem) {
+      currentPayoutFilter = filterType;
+      document.querySelectorAll("#sectionPayouts .filter-btn").forEach(b => b.classList.remove("active"));
+      btnElem.classList.add("active");
+      renderPayoutTable();
+    };
+
     // Search Listeners
     document.getElementById("searchBizInput").addEventListener("input", renderBizTable);
     document.getElementById("searchRiderInput").addEventListener("input", renderRiderTable);
+    document.getElementById("searchPayoutInput").addEventListener("input", renderPayoutTable);
   </script>
 
 </body>
